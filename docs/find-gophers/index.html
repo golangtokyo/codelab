@@ -29,8 +29,20 @@
 <p>静的解析はいっけん難しそうに感じますが、Goの標準パッケージには、静的解析を行うための<code>go</code>パッケージがあり、詳しい知識がなくても簡単に静的解析が行えるようになっています。</p>
 <p>このコードラボが終わる頃には、ソースコードをパースして抽象構文木（AST）を構築し、型チェックによって変数の定義位置や使用している位置などを解析することができるようになります。</p>
 <aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
-<p>Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
+<p><a href="https://golangtokyo.github.io/codelab/cloud-shell-go-setup?index=codelab" target="_blank">こちら</a>のコードラボで紹介している、Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
 </aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="サンプルコードのダウンロード" duration="1">
+        <p>まずはGitHubからこのコードラボで使うサンプルコードをダウンロードしましょう。<code>git clone</code>するか、ZIPでダウンロードして解凍しましょう。</p>
+<pre>$ git clone https://github.com/golangtokyo/codelab.git</pre>
+<p><a href="https://github.com/golangtokyo/codelab/archive/master.zip" target="_blank"><paper-button class="colored" raised>ZIPでダウンロード</paper-button></a></p>
+<p>なお、このコードラボのサンプルコードは<code>find-gophers</code>以下に入っています。</p>
+<pre>$ cd codelab/find-gophers
+$ ls
+1_parseexpr 2_parsefile README.md</pre>
 
 
       </google-codelab-step>
@@ -204,24 +216,25 @@ func GOPHER() (gopher *Gopher) { // ここ
 
       </google-codelab-step>
     
-      <google-codelab-step label="構文解析" duration="14">
+      <google-codelab-step label="構文解析" duration="13">
         <p>まずは構文解析を行いましょう。<code>go/parser</code>パッケージを用いれば、ソースコードから抽象構文木を取得することができます。なお、前述のとおり、字句解析については<code>go/parser</code>パッケージ内で<code>go/scanner</code>パッケージを用いて行われています。</p>
 <p><code>go/parser</code>パッケージでは、表3のような<code>Parse</code>で始まる関数がいくつか用意されています。</p>
+<p>表3：<code>go/parser</code>パッケージで提供されている構文解析を行う関数</p>
 <table>
 <tr><td colspan="1" rowspan="1"><p><strong><code>関数名</code></strong></p>
 </td><td colspan="1" rowspan="1"><p><strong><code>用途</code></strong></p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><code>ParseExprFrom</code></p>
-</td><td colspan="1" rowspan="1"><p><code>v + 1</code>のような式を</p>
+</td><td colspan="1" rowspan="1"><p><code>v + 1</code>のような式の単位でソースコードを構文解析する</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><code>ParseExpr</code></p>
-</td><td colspan="1" rowspan="1"><p>パッケージに関する情報を集める</p>
+</td><td colspan="1" rowspan="1"><p><code>ParserExprFrom</code>の簡易版</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><code>ParseFile</code></p>
-</td><td colspan="1" rowspan="1"><p>定数に関する型を提供</p>
+</td><td colspan="1" rowspan="1"><p>ファイル単位でソースコードを構文解析する</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><code>ParseDir</code></p>
-</td><td colspan="1" rowspan="1"><p>ドキュメントを抽象構文木（AST）から取り出す</p>
+</td><td colspan="1" rowspan="1"><p>ディレクトリ内のGoファイルを<code>ParseFile</code>で構文解析する</p>
 </td></tr>
 </table>
 
