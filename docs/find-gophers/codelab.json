@@ -2,8 +2,9 @@
   "environment": "web",
   "source": "1fbpwn8iOLZAO5AYkcbdIDHAM6Dtn1lUwnsUSyNwScP4",
   "format": "html",
+  "prefix": "/codelab/",
   "mainga": "UA-49880327-14",
-  "updated": "2018-08-23T05:43:13Z",
+  "updated": "2018-08-23T06:29:43Z",
   "id": "find-gophers",
   "duration": 60,
   "title": "静的解析をはじめよう - Gopherをさがせ！",
@@ -19,6 +20,6 @@
   "tags": [
     "devfest18jp"
   ],
-  "feedback": "https://github.com/golangtokyo/codelabs/issues",
+  "feedback": "https://github.com/golangtokyo/codelab/issues",
   "url": "find-gophers"
 }
