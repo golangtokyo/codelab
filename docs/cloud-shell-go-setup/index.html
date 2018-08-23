@@ -1,0 +1,101 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Google Cloud ShellにおけるGoの開発環境の構築</title>
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="elements/codelab.html">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <style is="custom-style">
+    body {
+      font-family: "Roboto",sans-serif;
+      background: var(--google-codelab-background, #F8F9FA);
+    }
+  </style>
+  
+</head>
+<body unresolved class="fullbleed">
+
+  <google-codelab title="Google Cloud ShellにおけるGoの開発環境の構築"
+                  environment="web"
+                  feedback-link="https://github.com/golangtokyo/codelab/issues">
+    
+      <google-codelab-step label="Google Cloud Shellとは?" duration="1">
+        <p>Google Cloud Platformが提供するサービスの1つです。Google Cloud Shellはブラウザ上で動作するシェルであり、Google Cloud Platformが提供する各クラウドリソースに対してアクセスすることができます。Google Cloud Shellは無料で利用することができます。</p>
+<p>Google Cloud ShellにはGoがプリインストールされているので、Goの開発環境を構築することなくGoでコードを書くことができます。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Google Cloud Console へアクセスする" duration="2">
+        <p>Google Cloud Shellを利用するにはGoogle Cloud Consoleへアクセスする必要があります。次のURLからGoogle Cloud Console へアクセスしましょう。</p>
+<ul>
+<li><a href="https://console.cloud.google.com/?hl=ja" target="_blank">https://console.cloud.google.com/?hl=ja</a></li>
+</ul>
+<p>Google Cloud Console を利用したことがない方は以下の規約同意画面が表示されます。利用規約を確認し、同意できる場合のみ画面の一番下にある&#34;すべてのサービスと関連APIについて、適用される利用規約を遵守して利用することに同意します。&#34;の選択肢を&#34;はい&#34;に選択し、&#34;同意して続行&#34;を選択してください。</p>
+<p><img style="max-width: 602.00px" src="img/953d5a41a9bce423.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Google Cloud Shell へアクセスする" duration="2">
+        <p>Google Cloud Console にアクセスできたら、画面上の右上にある Google Cloud Shell を起動するアイコンを選択してください。</p>
+<p><img style="max-width: 602.00px" src="img/69671804802e1015.png"></p>
+<p>Google Cloud Shellを起動したことがない方は以下の画面が表示されます。画面右下の &#34;CLOUD SHELL の起動&#34;を選択してください。</p>
+<p><img style="max-width: 602.00px" src="img/e3ea823fe1ec3ed3.png"></p>
+<p>Google Cloud Shellの起動が成功すると画面下にコマンドラインが表示されます。</p>
+<p><img style="max-width: 602.00px" src="img/ca21f5d61bcb1ce8.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Google Cloud ShellでGoのバージョンを確認する" duration="1">
+        <p>早速Goがインストールされているかを確認しましょう。</p>
+<p>Google Cloud Shellで<code>go version</code>を実行し、Goのバージョンを確認しましょう。次のように表示されるはずです。</p>
+<p><img style="max-width: 602.00px" src="img/d0428078d5e235cd.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="終了" duration="1">
+        <p>以上で Google Cloud Shell のセットアップは終わりです。Google Cloud Shellを利用してGoに触れてみましょう！</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-49880327-14', 'auto');
+
+    (function() {
+      var gaCodelab = '';
+      if (gaCodelab) {
+        ga('create', gaCodelab, 'auto', {name: 'codelab'});
+      }
+
+      var gaView;
+      var parts = location.search.substring(1).split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var param = parts[i].split('=');
+        if (param[0] === 'viewga') {
+          gaView = param[1];
+          break;
+        }
+      }
+      if (gaView && gaView !== gaCodelab) {
+        ga('create', gaView, 'auto', {name: 'view'});
+      }
+    })();
+  </script>
+
+</body>
+</html>

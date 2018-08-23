@@ -9,4 +9,5 @@
 
 ## コードラボ一覧
 
+* [Google Cloud ShellにおけるGoの開発環境の構築](./cloud-shell-go-setup)
 * [静的解析をはじめよう - Gopherをさがせ！](./find-gophers)
