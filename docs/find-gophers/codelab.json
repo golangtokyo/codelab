@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "source": "1fbpwn8iOLZAO5AYkcbdIDHAM6Dtn1lUwnsUSyNwScP4",
+  "format": "html",
+  "prefix": "../../",
+  "mainga": "UA-49880327-14",
+  "updated": "2018-08-23T05:43:13Z",
+  "id": "find-gophers",
+  "duration": 60,
+  "title": "静的解析をはじめよう - Gopherをさがせ！",
+  "author": "tenntenn",
+  "summary": "このハンズオンでは、静的解析を用いてソースコードからGopherを探します。ソースコードをパースして抽象構文木（AST）を構築するところから、型チェックまで知ることができます。",
+  "theme": "go",
+  "status": [
+    "draft"
+  ],
+  "category": [
+    "Go"
+  ],
+  "tags": [
+    "devfest18jp"
+  ],
+  "feedback": "https://github.com/golangtokyo/codelabs/issues",
+  "url": "find-gophers"
+}

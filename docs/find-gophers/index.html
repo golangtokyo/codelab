@@ -1,0 +1,272 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>静的解析をはじめよう - Gopherをさがせ！</title>
+  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../elements/codelab.html">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <style is="custom-style">
+    body {
+      font-family: "Roboto",sans-serif;
+      background: var(--google-codelab-background, #F8F9FA);
+    }
+  </style>
+  
+</head>
+<body unresolved class="fullbleed">
+
+  <google-codelab title="静的解析をはじめよう - Gopherをさがせ！"
+                  environment="web"
+                  feedback-link="https://github.com/golangtokyo/codelabs/issues">
+    
+      <google-codelab-step label="はじめに" duration="1">
+        <p>このコードラボでは、Goのソースコードの静的解析を扱います。静的解析を行うことにより、自作のコードチェッカーやリファクタリングツールを作ることができます。</p>
+<p>静的解析はいっけん難しそうに感じますが、Goの標準パッケージには、静的解析を行うための<code>go</code>パッケージがあり、詳しい知識がなくても簡単に静的解析が行えるようになっています。</p>
+<p>このコードラボが終わる頃には、ソースコードをパースして抽象構文木（AST）を構築し、型チェックによって変数の定義位置や使用している位置などを解析することができるようになります。</p>
+<aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
+<p>Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Gopherをさがせ！" duration="5">
+        <table>
+<tr><td colspan="1" rowspan="1"><p>右のキャラクターはGoのマスコットキャラクターのGopherです。Renée Frenchさんによって生み出されたキャラクターで、右の画像は<a href="https://gopherize.me" target="_blank">Gopherize</a>というサービスを使って作ったものです。</p>
+<p>Gopherizeを使えば、いろんな種類のGopherを作ることができます。</p>
+<p>さて、下の図にはたくさんのGopherがいますが、右のGopherはどこにいるでしょうか？</p>
+</td><td colspan="1" rowspan="1"><p><img style="max-width: 181.83px" src="img/867299250d7140f3.png"></p>
+</td></tr>
+</table>
+<p><img style="max-width: 531.21px" src="img/719ef6706f56982d.png"></p>
+<p>見つけられましたか？中央よりすこし左側にいますね！簡単でしたか？</p>
+<p>ではこちらはどうでしょうか？ソースコードの中から<code>Gopher</code>を探してみましょう。</p>
+<pre><code>package main
+
+import (
+        &#34;fmt&#34;
+)
+
+type Gopher struct {
+        Gopher string `json:&#34;gopher&#34;`
+}
+
+func main() {
+        const gopher = &#34;GOPHER&#34;
+        gogopher := GOPHER()
+        gogopher.Gopher = gopher
+        fmt.Println(gogopher)
+}
+
+func GOPHER() (gopher *Gopher) {
+        gopher = &amp;Gopher{Gopher: &#34;gopher&#34;}
+        return
+}</code></pre>
+<p>これも簡単です。<code>grep</code>コマンドを使えば文字列の検索は簡単に行えることはご存知でしょう。実際<code>grep</code>コマンドで調べると6箇所見つかりました。</p>
+<pre>type Gopher struct {
+        Gopher string `json:&#34;gopher&#34;`
+        gogopher.Gopher = gopher
+func GOPHER() (gopher *Gopher) {
+        gopher = &amp;Gopher{Gopher: &#34;gopher&#34;}</pre>
+<p>では、Gopherという文字列ではなく、Gopher型を検索したい場合どうすればよいでしょうか？<code>grep</code>コマンドで調べたもののうち、フィールドの<code>Gopher</code>などを除外すると、該当箇所は次の3箇所になります。</p>
+<pre><code>package main
+
+import (
+        &#34;fmt&#34;
+)
+
+type Gopher struct { // ここ
+        Gopher string `json:&#34;gopher&#34;`
+}
+
+func main() {
+        const gopher = &#34;GOPHER&#34;
+        gogopher := GOPHER()
+        gogopher.Gopher = gopher
+        fmt.Println(gogopher)
+}
+
+func GOPHER() (gopher *Gopher) { // ここ
+        gopher = &amp;Gopher{Gopher: &#34;gopher&#34;} // ここ
+        return
+}</code></pre>
+<p>文字列で検索するだけでは、この3箇所に絞ることは不可能です。<code>grep</code>コマンドでは、入力されたファイルをGoのソースコードだということを理解できないためです。</p>
+<p>与えられたファイルをGoのソースコードだと解釈し、<code>Gopher</code>型が用いられている場所を検索するには静的解析が必要になります。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="静的解析" duration="10">
+        <p>静的解析とは、プログラムを実行せずに解析することをいいます。ソースコードを入力とし、ソースコードの構造や型情報などを解析することができます。</p>
+<p>一方、プログラムを実行して解析を行うものとして、動的解析があります。動的解析の例として、並行処理におけるデータ競合の検出器（<code>go test -race</code>など）やリフレクションがあります。</p>
+<p>静的解析を行うとどんなメリットがあるのでしょうか？ソースコードを解析することで、さまざまな情報を得ることができ、それを用いると開発支援ツールを作ることができます。実際に、Goによる開発でよく用いられる表1のようなツールでも静的解析が用いられています。</p>
+<p>表1：Goの開発支援ツール</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong><code>ツール名</code></strong></p>
+</td><td colspan="1" rowspan="1"><p><strong><code>用途</code></strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>gofmt/goimports</code></p>
+</td><td colspan="1" rowspan="1"><p>コードフォーマッタ</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go vet/golint</code></p>
+</td><td colspan="1" rowspan="1"><p>コードチェッカー、リンター</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>guru</code></p>
+</td><td colspan="1" rowspan="1"><p>コード理解ツール</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>gocode</code></p>
+</td><td colspan="1" rowspan="1"><p>コード補完ツール</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>errcheck</code></p>
+</td><td colspan="1" rowspan="1"><p>適切なエラー処理をチェックする</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>gorename/gomvpkg</code></p>
+</td><td colspan="1" rowspan="1"><p>リファクタリングツール</p>
+</td></tr>
+</table>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Goと静的解析" duration="10">
+        <p>Goは静的解析をとても簡単に行うことができる言語です。文法がシンプルで静的型付け言語、暗黙の型変換などを行わないなどの特徴を持っているからです。そして、何より標準パッケージとして静的解析を行うためのパッケージである<code>go</code>パッケージが存在するからです。</p>
+<p><code>go</code>パッケージは、表2のようなサブパッケージから構成されています。</p>
+<p>表2：<code>go</code>パッケージのサブパッケージ</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong><code>サブパッケージ</code></strong></p>
+</td><td colspan="1" rowspan="1"><p><strong><code>用途</code></strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/ast</code></p>
+</td><td colspan="1" rowspan="1"><p>抽象構文木（AST）に関わる型や関数を提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/build</code></p>
+</td><td colspan="1" rowspan="1"><p>パッケージに関する情報を集める</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/constant</code></p>
+</td><td colspan="1" rowspan="1"><p>定数に関する型を提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/doc</code></p>
+</td><td colspan="1" rowspan="1"><p>ドキュメントを抽象構文木（AST）から取り出す</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/format</code></p>
+</td><td colspan="1" rowspan="1"><p>コードフォーマッタの機能を提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/importer</code></p>
+</td><td colspan="1" rowspan="1"><p>コンパイラに適したImporterを提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/parser</code></p>
+</td><td colspan="1" rowspan="1"><p>構文解析の機能を提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/printer</code></p>
+</td><td colspan="1" rowspan="1"><p>抽象構文木（AST）の表示機能を提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/scanner</code></p>
+</td><td colspan="1" rowspan="1"><p>字句解析の機能を提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/token</code></p>
+</td><td colspan="1" rowspan="1"><p>トークンに関する型を提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>go/types</code></p>
+</td><td colspan="1" rowspan="1"><p>型チェックに関する機能を提供</p>
+</td></tr>
+</table>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="静的解析の流れ" duration="5">
+        <p>静的解析は図1のような流れで行われます。それぞれのフェーズを右に記載してあるパッケージが担当しています。</p>
+<p><img style="max-width: 425.00px" src="img/987500e33ab2dbc0.png"></p>
+<p>図1: 静的解析の流れ</p>
+<p>まずは、入力として与えられたソースコードを字句解析というフェーズでトークンに分割されます。字句解析で、文字列の塊だったソースコードが予約語の<code>func</code>なのか、識別子（変数名や関数名など）なのか、数値リテラルなのかなどを区別することができるトークンの塊に変換されます。</p>
+<p>なお、<code>go</code>パッケージを使う場合、<code>go/parser</code>パッケージが内部で字句解析を行うため、直接字句解析を行うことはあまりありません。そのため、図1では字句解析のフェーズが点線で描かれています。</p>
+<p><img style="max-width: 378.50px" src="img/d9d558a494ed7e44.png"></p>
+<p>図2：字句解析</p>
+<p>次に、トークンを基に構文解析を行い、トークンを抽象構文木と呼ばれるGoの構文を表現する木構造のデータに変換します。構文解析を行うと、どの部分が関数定義で、どの部分がその引数の定義なのか、などを抽象構文木から取得することができるようになります。</p>
+<p><img style="max-width: 487.50px" src="img/65c9098b22b3bfe4.png"></p>
+<p>図3：構文解析</p>
+<p>そして最後に型チェックを行うことで、抽象構文木から型情報を抽出します。型チェックは次の3つの工程から成ります。</p>
+<ul>
+<li>識別子の解決</li>
+<li>型の推論</li>
+<li>定数の評価</li>
+</ul>
+<p>この3つの工程を行い、型情報を抽出することで、どの変数（識別子）がどういうデータ型でどこで定義され、どこで使用されているかなどを知ることができます。</p>
+<p><img style="max-width: 404.14px" src="img/7415d46d82f6334f.png"></p>
+<p>図4：型チェック</p>
+<p>静的解析の流れを学んだところで、次から実際にGoのソースコードを静的解析してみましょう。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="構文解析" duration="14">
+        <p>まずは構文解析を行いましょう。<code>go/parser</code>パッケージを用いれば、ソースコードから抽象構文木を取得することができます。なお、前述のとおり、字句解析については<code>go/parser</code>パッケージ内で<code>go/scanner</code>パッケージを用いて行われています。</p>
+<p><code>go/parser</code>パッケージでは、表3のような<code>Parse</code>で始まる関数がいくつか用意されています。</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong><code>関数名</code></strong></p>
+</td><td colspan="1" rowspan="1"><p><strong><code>用途</code></strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>ParseExprFrom</code></p>
+</td><td colspan="1" rowspan="1"><p><code>v + 1</code>のような式を</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>ParseExpr</code></p>
+</td><td colspan="1" rowspan="1"><p>パッケージに関する情報を集める</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>ParseFile</code></p>
+</td><td colspan="1" rowspan="1"><p>定数に関する型を提供</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>ParseDir</code></p>
+</td><td colspan="1" rowspan="1"><p>ドキュメントを抽象構文木（AST）から取り出す</p>
+</td></tr>
+</table>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="型チェック" duration="14">
+        
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="おわりに" duration="1">
+        
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-49880327-14', 'auto');
+
+    (function() {
+      var gaCodelab = '';
+      if (gaCodelab) {
+        ga('create', gaCodelab, 'auto', {name: 'codelab'});
+      }
+
+      var gaView;
+      var parts = location.search.substring(1).split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var param = parts[i].split('=');
+        if (param[0] === 'viewga') {
+          gaView = param[1];
+          break;
+        }
+      }
+      if (gaView && gaView !== gaCodelab) {
+        ga('create', gaView, 'auto', {name: 'view'});
+      }
+    })();
+  </script>
+
+</body>
+</html>
