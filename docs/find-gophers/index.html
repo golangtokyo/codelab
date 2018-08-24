@@ -237,6 +237,43 @@ func GOPHER() (gopher *Gopher) { // ここ
 </td><td colspan="1" rowspan="1"><p>ディレクトリ内のGoファイルを<code>ParseFile</code>で構文解析する</p>
 </td></tr>
 </table>
+<p>最初に式を構文解析してみましょう。<code>1_parseexpr</code>というディレクトリにある<code>main.go</code>をみてみると、次のようになっています。</p>
+<pre><code>package main
+
+import (
+        &#34;go/ast&#34;
+        &#34;go/parser&#34;
+        &#34;log&#34;
+)
+
+func main() {
+        // 式をパースする
+        expr, err := parser.ParseExpr(&#34;v + 1&#34;)
+        if err != nil {
+                log.Fatal(&#34;Error:&#34;, err)
+        }
+        // v + 1の抽象構文木(AST)を表示する
+        ast.Print(nil, expr)
+}</code></pre>
+<p><code>parser.ParseExpr(&#34;v + 1&#34;)</code>で<code>v + 1</code>という式だけで構成されたソースコードを構文解析し、抽象構文木を取得しています。取得した抽象構文木を<code>ast.Print</code>関数を用いて出力しています。このコードを実行すると、次のように出力されます。</p>
+<pre>$ go run 1_parseexpr/main.go
+     0  *ast.BinaryExpr {
+     1  .  X: *ast.Ident {
+     2  .  .  NamePos: 1
+     3  .  .  Name: &#34;v&#34;
+     4  .  .  Obj: *ast.Object {
+     5  .  .  .  Kind: bad
+     6  .  .  .  Name: &#34;&#34;
+     7  .  .  }
+     8  .  }
+     9  .  OpPos: 3
+    10  .  Op: +
+    11  .  Y: *ast.BasicLit {
+    12  .  .  ValuePos: 5
+    13  .  .  Kind: INT
+    14  .  .  Value: &#34;1&#34;
+    15  .  }
+    16  }</pre>
 
 
       </google-codelab-step>
