@@ -2,7 +2,7 @@
   "environment": "web",
   "source": "16Xqaj-2RytzDzbIEgeOmYGQJiaPYlUlGhdZo6vaIej8",
   "format": "html",
-  "prefix": "../../",
+  "prefix": "/codelab/",
   "mainga": "UA-49880327-14",
   "updated": "2018-08-24T11:13:50Z",
   "id": "cloud-shell-go-setup",
