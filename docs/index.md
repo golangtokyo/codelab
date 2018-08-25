@@ -7,5 +7,5 @@
 
 # コードラボ一覧
 
-* (WIP)[Google Cloud ShellにおけるGoの開発環境の構築](./cloud-shell-go-setup?index=codelab) by pospome
+* [Google Cloud ShellにおけるGoの開発環境の構築](./cloud-shell-go-setup?index=codelab) by pospome
 * (WIP)[静的解析をはじめよう - Gopherをさがせ！](./find-gophers?index=codelab) by tenntenn
