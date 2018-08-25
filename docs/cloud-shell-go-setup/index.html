@@ -31,21 +31,21 @@
 
       </google-codelab-step>
     
-      <google-codelab-step label="Google Cloud Console へアクセスする" duration="2">
-        <p>Google Cloud Shellを利用するにはGoogle Cloud Consoleへアクセスする必要があります。次のURLからGoogle Cloud Console へアクセスしましょう。</p>
+      <google-codelab-step label="Google Cloud Consoleへアクセスする" duration="2">
+        <p>Google Cloud Shellを利用するにはGoogle Cloud Consoleへアクセスする必要があります。次のURLからGoogle Cloud Consoleへアクセスしましょう。</p>
 <ul>
 <li><a href="https://console.cloud.google.com/?hl=ja" target="_blank">https://console.cloud.google.com/?hl=ja</a></li>
 </ul>
-<p>Google Cloud Console を利用したことがない方は以下の規約同意画面が表示されます。利用規約を確認し、同意できる場合のみ画面の一番下にある&#34;すべてのサービスと関連APIについて、適用される利用規約を遵守して利用することに同意します。&#34;の選択肢を&#34;はい&#34;に選択し、&#34;同意して続行&#34;を選択してください。</p>
+<p>Google Cloud Consoleを利用したことがない方は以下の規約同意画面が表示されます。利用規約を確認し、同意できる場合のみ画面の一番下にある&#34;すべてのサービスと関連APIについて、適用される利用規約を遵守して利用することに同意します。&#34;の選択肢を&#34;はい&#34;に選択し、&#34;同意して続行&#34;を選択してください。</p>
 <p><img style="max-width: 602.00px" src="img/953d5a41a9bce423.png"></p>
 
 
       </google-codelab-step>
     
-      <google-codelab-step label="Google Cloud Shell へアクセスする" duration="2">
-        <p>Google Cloud Console にアクセスできたら、画面上の右上にある Google Cloud Shell を起動するアイコンを選択してください。</p>
+      <google-codelab-step label="Google Cloud Shellへアクセスする" duration="2">
+        <p>Google Cloud Consoleにアクセスできたら、画面上の右上にある Google Cloud Shell を起動するアイコンを選択してください。</p>
 <p><img style="max-width: 602.00px" src="img/69671804802e1015.png"></p>
-<p>Google Cloud Shellを起動したことがない方は以下の画面が表示されます。画面右下の &#34;CLOUD SHELL の起動&#34;を選択してください。</p>
+<p>Google Cloud Shellを起動したことがない方は以下の画面が表示されます。画面右下の&#34;CLOUD SHELL の起動&#34;を選択してください。</p>
 <p><img style="max-width: 602.00px" src="img/e3ea823fe1ec3ed3.png"></p>
 <p>Google Cloud Shellの起動が成功すると画面下にコマンドラインが表示されます。</p>
 <p><img style="max-width: 602.00px" src="img/ca21f5d61bcb1ce8.png"></p>
@@ -53,16 +53,84 @@
 
       </google-codelab-step>
     
+      <google-codelab-step label="Gitがインストールされていることを確認する" duration="1">
+        <p>Google Cloud ShellではGitがプリインストールされています。<code>git version</code>でGitのバージョンが表示されることを確認しましょう。</p>
+<pre>$ git version</pre>
+
+
+      </google-codelab-step>
+    
       <google-codelab-step label="Google Cloud ShellでGoのバージョンを確認する" duration="1">
         <p>早速Goがインストールされているかを確認しましょう。</p>
-<p>Google Cloud Shellで<code>go version</code>を実行し、Goのバージョンを確認しましょう。次のように表示されるはずです。</p>
-<p><img style="max-width: 602.00px" src="img/d0428078d5e235cd.png"></p>
+<p>Google Cloud Shellで<code>go version</code>を実行し、Goのバージョンを確認しましょう。次のように表示されるはずです。プリインストールされているバージョンは異なる可能性があります。</p>
+<pre>$ go version</pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="特定のバージョンのGoを利用する" duration="5">
+        <p>本セクションではGoogle Coud ShellにプリインストールされているGoとは異なるバージョンのGoをインストールする方法を説明します。プリインストールされているバージョンとは異なるバージョンのGoが必要な場合は、こちらを参考にインストールしてください。</p>
+<h2>インストール対象のGoバイナリを確認する</h2>
+<p>次のURLがGoバイナリの一覧です。アクセスしてみましょう。</p>
+<ul>
+<li><a href="https://golang.org/dl/" target="_blank">https://golang.org/dl/</a></li>
+</ul>
+<p><img style="max-width: 602.00px" src="img/f95718b721615416.png"></p>
+<p>Google Cloud Shellでは次のバイナリが対象になります。バージョンは任意のものを選択してください。インストール対象がGo 1.9.7 の場合、バイナリは&#34;go1.9.7.linux-amd64.tar.gz&#34;です。</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>Kind</strong></p>
+</td><td colspan="1" rowspan="1"><p>Archive</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>OS</strong></p>
+</td><td colspan="1" rowspan="1"><p>Linux</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Arch</strong></p>
+</td><td colspan="1" rowspan="1"><p>x86-64</p>
+</td></tr>
+</table>
+<h2>バイナリをダウンロードする。</h2>
+<p>インストール対象のバイナリを特定できたらダウンロードしましょう。ダウンロードには<code>wget</code>コマンドと<code>tar</code>コマンドを利用します。次のコマンドを実行しましょう。バイナリのファイル名はインストール対象のものに変更してください。</p>
+<pre>$ wget -O - https://dl.google.com/go/go1.9.7.linux-amd64.tar.gz | tar zxvf -</pre>
+<p>コマンドを実行するとgoというディレクトリができているはずです。</p>
+<pre>$ ls
+go</pre>
+<p>ダウンロードしたGoのバージョンを確認してみましょう。ダウンロードしたGoのバイナリを明示的に指定して<code>go version</code>を実行します。プリインストールされているGoとは別のバージョンがj表示されれば成功です。</p>
+<pre>$ .go/bin/go version
+go version go1.9.7 linux/amd64</pre>
+<p>ダウンロードしたGoのバイナリを明示的に指定することで異なるバージョンのGoを利用することができます。</p>
+<h2>goコマンドでダウンロードしたバイナリを利用するように設定する</h2>
+<p>ダウンロードしたGoのバイナリを<code>go</code>コマンドで実行するように設定することも可能です。</p>
+<p>まずは環境変数の<code>GOROOT</code>を取得したGoのバイナリのパスで上書きします。次の例ではホームディレクトリにダウンロードした<code>go</code>ディレクトリを<code>$GOROOT</code>に上書きしています。</p>
+<pre>$ export GOROOT=$HOME/go/</pre>
+<p>最後に<code>$GROOT</code>を<code>$PATH</code>に追加しましょう。</p>
+<pre>$ export PATH=$GOROOT/bin:$PATH</pre>
+<p>これで設定は完了です。<code>go versionを�</code>�行してみましょう。次のようにダウンロードしたGoのバイナリのバージョンが表示されれば成功です。</p>
+<pre>$ go version
+go version go1.9.7 linux/amd64</pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Google Cloud Shell備え付けのコードエディタを利用する" duration="1">
+        <p>Google Cloud Shellではターミナル上で動作するVimやEmacsがプリインストールされていますが、備え付けのコードエディタも存在します。コードエディタはコマンドラインの右上にあるアイコンから起動できます。VimやEmacsに慣れていない方はコードエディタを使うと良いでしょう。</p>
+<p><img style="max-width: 602.00px" src="img/781339d007dcd114.png"></p>
+<p>コードエディタが起動すると次のような画面が表示されます。左上のメニューからディレクトリ、ファイルの作成などができます。</p>
+<p><img style="max-width: 602.00px" src="img/59043de9aa799b8a.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="ブラウザからHTTPで任意のポートにアクセスする" duration="1">
+        <p>Google Cloud ShellにはWebでプレビューする機能が備わっています。WebプレビューはGoogle Cloud Shellが動作するサーバの特定のポートにブラウザからHTTPSでアクセスできる機能です。これによってGoogle Cloud Shell内でWebサーバを立ち上げてブラウザからアクセスすることができます。Webプレビューはコマンドラインの右上にあるアイコンから起動できます。</p>
+<p><img style="max-width: 602.00px" src="img/f21279884504efe4.png"></p>
+<p>Webプレビューは任意のポートを利用することができます。<img style="max-width: 472.00px" src="img/79cd1bb9c05e79bc.png"></p>
+<p>ブラウザを利用するハンズオンやWebサーバを利用するハンズオンではWebプレビュー機能を利用することで動作確認が可能です。</p>
 
 
       </google-codelab-step>
     
       <google-codelab-step label="終了" duration="1">
-        <p>以上で Google Cloud Shell のセットアップは終わりです。Google Cloud Shellを利用してGoに触れてみましょう！</p>
+        <p>以上で Google Cloud Shellのセットアップは終わりです。Google Cloud Shellを利用してGoに触れてみましょう！</p>
 
 
       </google-codelab-step>
