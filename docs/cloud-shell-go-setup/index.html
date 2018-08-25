@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#4F7DC9">
   <meta charset="UTF-8">
   <title>Google Cloud ShellにおけるGoの開発環境の構築</title>
-  <script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-  <link rel="import" href="../../elements/codelab.html">
+  <script src="/codelab/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="/codelab/elements/codelab.html">
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
   <style is="custom-style">
     body {
@@ -54,7 +54,7 @@
       </google-codelab-step>
     
       <google-codelab-step label="Gitがインストールされていることを確認する" duration="1">
-        <p>Google Cloud ShellではGitがプリインストールされています。<code>git version</code>でgitのバージョンが表示されることを確認しましょう。</p>
+        <p>Google Cloud ShellではGitがプリインストールされています。<code>git version</code>でGitのバージョンが表示されることを確認しましょう。</p>
 <pre>$ git version</pre>
 
 
@@ -75,7 +75,7 @@
 <ul>
 <li><a href="https://golang.org/dl/" target="_blank">https://golang.org/dl/</a></li>
 </ul>
-<p><img style="max-width: 602.00px" src="img/8d1f0b9e21646dbe.png"></p>
+<p><img style="max-width: 602.00px" src="img/f95718b721615416.png"></p>
 <p>Google Cloud Shellでは次のバイナリが対象になります。バージョンは任意のものを選択してください。インストール対象がGo 1.9.7 の場合、バイナリは&#34;go1.9.7.linux-amd64.tar.gz&#34;です。</p>
 <table>
 <tr><td colspan="1" rowspan="1"><p><strong>Kind</strong></p>
@@ -89,7 +89,7 @@
 </td></tr>
 </table>
 <h2>バイナリをダウンロードする。</h2>
-<p>インストール対象のバイナリを特定できたらダウンロードしましょう。ダウンロードにはwgetコマンドとtarコマンドを利用します。次のコマンドを実行しましょう。バイナリのファイル名はインストール対象のものに変更してください。</p>
+<p>インストール対象のバイナリを特定できたらダウンロードしましょう。ダウンロードには<code>wget</code>コマンドと<code>tar</code>コマンドを利用します。次のコマンドを実行しましょう。バイナリのファイル名はインストール対象のものに変更してください。</p>
 <pre>$ wget -O - https://dl.google.com/go/go1.9.7.linux-amd64.tar.gz | tar zxvf -</pre>
 <p>コマンドを実行するとgoというディレクトリができているはずです。</p>
 <pre>$ ls
@@ -99,19 +99,20 @@ go</pre>
 go version go1.9.7 linux/amd64</pre>
 <p>ダウンロードしたGoのバイナリを明示的に指定することで異なるバージョンのGoを利用することができます。</p>
 <h2>goコマンドでダウンロードしたバイナリを利用するように設定する</h2>
-<p>ダウンロードしたGoのバイナリをGoコマンドで実行するように設定することも可能です。</p>
-<p>まずは環境変数のGOROOTを取得したGoのバイナリのパスで上書きします。次の例ではホームディレクトリにダウンロードしたgoディレクトリを$GOROOTに上書きしています。</p>
+<p>ダウンロードしたGoのバイナリを<code>go</code>コマンドで実行するように設定することも可能です。</p>
+<p>まずは環境変数の<code>GOROOT</code>を取得したGoのバイナリのパスで上書きします。次の例ではホームディレクトリにダウンロードした<code>go</code>ディレクトリを<code>$GOROOT</code>に上書きしています。</p>
 <pre>$ export GOROOT=$HOME/go/</pre>
-<p>最後に$GROOTを$PATHに追加しましょう。</p>
+<p>最後に<code>$GROOT</code>を<code>$PATH</code>に追加しましょう。</p>
 <pre>$ export PATH=$GOROOT/bin:$PATH</pre>
 <p>これで設定は完了です。<code>go versionを�</code>�行してみましょう。次のようにダウンロードしたGoのバイナリのバージョンが表示されれば成功です。</p>
-<pre>$ go version</pre>
+<pre>$ go version
+go version go1.9.7 linux/amd64</pre>
 
 
       </google-codelab-step>
     
       <google-codelab-step label="Google Cloud Shell備え付けのコードエディタを利用する" duration="1">
-        <p>Google Cloud ShellではVim,Emacsがプリインストールされていますが、備え付けのコードエディタも存在します。コードエディタはコマンドラインの右上にあるアイコンから起動できます。Vim,Emacsに慣れていない方はコードエディタを使うと良いでしょう。</p>
+        <p>Google Cloud Shellではターミナル上で動作するVimやEmacsがプリインストールされていますが、備え付けのコードエディタも存在します。コードエディタはコマンドラインの右上にあるアイコンから起動できます。VimやEmacsに慣れていない方はコードエディタを使うと良いでしょう。</p>
 <p><img style="max-width: 602.00px" src="img/781339d007dcd114.png"></p>
 <p>コードエディタが起動すると次のような画面が表示されます。左上のメニューからディレクトリ、ファイルの作成などができます。</p>
 <p><img style="max-width: 602.00px" src="img/59043de9aa799b8a.png"></p>
@@ -120,7 +121,7 @@ go version go1.9.7 linux/amd64</pre>
       </google-codelab-step>
     
       <google-codelab-step label="ブラウザからHTTPで任意のポートにアクセスする" duration="1">
-        <p>Google Cloud ShellにはWebでプレビューする機能が備わっています。WebプレビューはGoogle Cloud Console内の特定のポートにブラウザからHTTPでアクセスできる機能です。Webプレビューはコマンドラインの右上にあるアイコンから起動できます。</p>
+        <p>Google Cloud ShellにはWebでプレビューする機能が備わっています。WebプレビューはGoogle Cloud Shellが動作するサーバの特定のポートにブラウザからHTTPSでアクセスできる機能です。これによってGoogle Cloud Shell内でWebサーバを立ち上げてブラウザからアクセスすることができます。Webプレビューはコマンドラインの右上にあるアイコンから起動できます。</p>
 <p><img style="max-width: 602.00px" src="img/f21279884504efe4.png"></p>
 <p>Webプレビューは任意のポートを利用することができます。<img style="max-width: 472.00px" src="img/79cd1bb9c05e79bc.png"></p>
 <p>ブラウザを利用するハンズオンやWebサーバを利用するハンズオンではWebプレビュー機能を利用することで動作確認が可能です。</p>
