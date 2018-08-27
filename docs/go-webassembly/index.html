@@ -1,0 +1,92 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>GoでWebAssemblyに触れよう</title>
+  <script src="/codelab/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="/codelab/elements/codelab.html">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <style is="custom-style">
+    body {
+      font-family: "Roboto",sans-serif;
+      background: var(--google-codelab-background, #F8F9FA);
+    }
+  </style>
+  
+</head>
+<body unresolved class="fullbleed">
+
+  <google-codelab title="GoでWebAssemblyに触れよう"
+                  environment="web"
+                  feedback-link="https://github.com/golangtokyo/codelab/issues">
+    
+      <google-codelab-step label="はじめに" duration="1">
+        <p>ここではGoでWebAssemblyを扱う方法について解説を行います。GoのコードからWebAssemblyへのビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて学ぶことができます。なお、このコードラボでは、Go1.11以上のGoの開発環境を必要とします。</p>
+<aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
+<p><a href="https://golangtokyo.github.io/codelab/cloud-shell-go-setup?index=codelab" target="_blank">こちら</a>のコードラボで紹介している、Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="WebAssemblyとは？" duration="1">
+        
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="ビルドしてみよう" duration="1">
+        
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="JavaScriptのオブジェクトを扱う" duration="1">
+        
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="コールバックを設定する" duration="1">
+        
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="おわりに" duration="1">
+        
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-49880327-14', 'auto');
+
+    (function() {
+      var gaCodelab = '';
+      if (gaCodelab) {
+        ga('create', gaCodelab, 'auto', {name: 'codelab'});
+      }
+
+      var gaView;
+      var parts = location.search.substring(1).split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var param = parts[i].split('=');
+        if (param[0] === 'viewga') {
+          gaView = param[1];
+          break;
+        }
+      }
+      if (gaView && gaView !== gaCodelab) {
+        ga('create', gaView, 'auto', {name: 'view'});
+      }
+    })();
+  </script>
+
+</body>
+</html>

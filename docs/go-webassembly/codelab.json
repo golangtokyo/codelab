@@ -1,0 +1,26 @@
+{
+  "environment": "web",
+  "source": "12IXvrTgNIMUXotVcGkpqfu3WFhvtvfnzlvQfJIn0h6k",
+  "format": "html",
+  "prefix": "/codelab/",
+  "mainga": "UA-49880327-14",
+  "updated": "2018-08-27T19:35:16Z",
+  "id": "go-webassembly",
+  "duration": 6,
+  "title": "GoでWebAssemblyに触れよう",
+  "author": "tenntenn",
+  "summary": "このコードラボでは、GoでWebAssemblyを扱う方法について解説を行います。ビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて学ぶことができます。",
+  "theme": "go",
+  "status": [
+    "draft"
+  ],
+  "category": [
+    "Go",
+    "WebAssembly"
+  ],
+  "tags": [
+    "devfest18jp"
+  ],
+  "feedback": "https://github.com/golangtokyo/codelab/issues",
+  "url": "go-webassembly"
+}
