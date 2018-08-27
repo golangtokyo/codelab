@@ -28,6 +28,7 @@
         <p>このコードラボでは、Goのソースコードの静的解析を扱います。静的解析を行うことにより、自作のコードチェッカーやリファクタリングツールを作ることができます。</p>
 <p>静的解析はいっけん難しそうに感じますが、Goの標準パッケージには、静的解析を行うための<code>go</code>パッケージがあり、詳しい知識がなくても簡単に静的解析が行えるようになっています。</p>
 <p>このコードラボが終わる頃には、ソースコードをパースして抽象構文木（AST）を構築し、型チェックによって変数の定義位置や使用している位置などを解析することができるようになります。</p>
+<p>静的解析を行えるようになると、自作のコードチェッカーやリファクタリングツール、コードジェネレータを簡単に作ることができるようになります。ぜひ、このコードラボにチャレンジしてみてください！</p>
 <aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
 <p><a href="https://golangtokyo.github.io/codelab/cloud-shell-go-setup?index=codelab" target="_blank">こちら</a>のコードラボで紹介している、Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
 </aside>
@@ -48,7 +49,8 @@ $ ls
       </google-codelab-step>
     
       <google-codelab-step label="Gopherをさがせ！" duration="5">
-        <table>
+        <h2>Gopherをさがせ！</h2>
+<table>
 <tr><td colspan="1" rowspan="1"><p>右のキャラクターはGoのマスコットキャラクターのGopherです。Renée Frenchさんによって生み出されたキャラクターで、右の画像は<a href="https://gopherize.me" target="_blank">Gopherize</a>というサービスを使って作ったものです。</p>
 <p>Gopherizeを使えば、いろんな種類のGopherを作ることができます。</p>
 <p>さて、下の図にはたくさんのGopherがいますが、右のGopherはどこにいるでしょうか？</p>
@@ -58,6 +60,7 @@ $ ls
 <p><img style="max-width: 531.21px" src="img/719ef6706f56982d.png"></p>
 <p>見つけられましたか？中央よりすこし左側にいますね！簡単でしたか？</p>
 <p>ではこちらはどうでしょうか？ソースコードの中から<code>Gopher</code>を探してみましょう。</p>
+<h2>ソースコードからGopherをさがせ！</h2>
 <pre><code>package main
 
 import (
@@ -80,12 +83,14 @@ func GOPHER() (gopher *Gopher) {
         return
 }</code></pre>
 <p>これも簡単です。<code>grep</code>コマンドを使えば文字列の検索は簡単に行えることはご存知でしょう。実際<code>grep</code>コマンドで調べると6箇所見つかりました。</p>
-<pre>type Gopher struct {
+<pre>$ grep Gopher _gopher.go
+type Gopher struct {
         Gopher string `json:&#34;gopher&#34;`
         gogopher.Gopher = gopher
 func GOPHER() (gopher *Gopher) {
         gopher = &amp;Gopher{Gopher: &#34;gopher&#34;}</pre>
-<p>では、Gopherという文字列ではなく、Gopher型を検索したい場合どうすればよいでしょうか？<code>grep</code>コマンドで調べたもののうち、フィールドの<code>Gopher</code>などを除外すると、該当箇所は次の3箇所になります。</p>
+<h2>Gopher型をさがせ！</h2>
+<p>では、<code>Gopher</code>という文字列ではなく、<code>Gopher</code>型を検索したい場合どうすればよいでしょうか？<code>grep</code>コマンドで調べたもののうち、フィールドの<code>Gopher</code>などを除外すると、該当箇所は次の3箇所になります。</p>
 <pre><code>package main
 
 import (
@@ -217,7 +222,8 @@ func GOPHER() (gopher *Gopher) { // ここ
       </google-codelab-step>
     
       <google-codelab-step label="構文解析" duration="13">
-        <p>まずは構文解析を行いましょう。<code>go/parser</code>パッケージを用いれば、ソースコードから抽象構文木を取得することができます。なお、前述のとおり、字句解析については<code>go/parser</code>パッケージ内で<code>go/scanner</code>パッケージを用いて行われています。</p>
+        <h2>構文解析を行う関数</h2>
+<p>まずは構文解析を行いましょう。<code>go/parser</code>パッケージを用いれば、ソースコードから抽象構文木を取得することができます。なお、前述のとおり、字句解析については<code>go/parser</code>パッケージ内で<code>go/scanner</code>パッケージを用いて行われています。</p>
 <p><code>go/parser</code>パッケージでは、表3のような<code>Parse</code>で始まる関数がいくつか用意されています。</p>
 <p>表3：<code>go/parser</code>パッケージで提供されている構文解析を行う関数</p>
 <table>
@@ -228,7 +234,7 @@ func GOPHER() (gopher *Gopher) { // ここ
 </td><td colspan="1" rowspan="1"><p><code>v + 1</code>のような式の単位でソースコードを構文解析する</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><code>ParseExpr</code></p>
-</td><td colspan="1" rowspan="1"><p><code>ParserExprFrom</code>の簡易版</p>
+</td><td colspan="1" rowspan="1"><p><code>ParseExprFrom</code>の簡易版</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><code>ParseFile</code></p>
 </td><td colspan="1" rowspan="1"><p>ファイル単位でソースコードを構文解析する</p>
@@ -237,6 +243,7 @@ func GOPHER() (gopher *Gopher) { // ここ
 </td><td colspan="1" rowspan="1"><p>ディレクトリ内のGoファイルを<code>ParseFile</code>で構文解析する</p>
 </td></tr>
 </table>
+<h2>式の構文解析</h2>
 <p>最初に式を構文解析してみましょう。<code>1_parseexpr</code>というディレクトリにある<code>main.go</code>をみてみると、次のようになっています。</p>
 <pre><code>package main
 
@@ -256,7 +263,8 @@ func main() {
         ast.Print(nil, expr)
 }</code></pre>
 <p><code>parser.ParseExpr(&#34;v + 1&#34;)</code>で<code>v + 1</code>という式だけで構成されたソースコードを構文解析し、抽象構文木を取得しています。取得した抽象構文木を<code>ast.Print</code>関数を用いて出力しています。このコードを実行すると、次のように出力されます。</p>
-<pre>$ go run 1_parseexpr/main.go
+<pre>$ cd 1_parseexpr
+$ go run main.go
      0  *ast.BinaryExpr {
      1  .  X: *ast.Ident {
      2  .  .  NamePos: 1
@@ -274,17 +282,227 @@ func main() {
     14  .  .  Value: &#34;1&#34;
     15  .  }
     16  }</pre>
+<p><code>v + 1</code>に<code>parser.ParseExpr</code>を実行すると、2項演算式を表す<code>*ast.BinaryExpr</code>をルートノードとした抽象構文木（AST）になります。<code>*ast.BinaryExpr</code>は2つの項を子ノードとして持ち、それぞれ<code>X</code>と<code>Y</code>という名前のフィールドとして保持されています。</p>
+<p>第1項を表す<code>X</code>は、<code>*ast.Ident</code>という識別子（変数名や関数名など）を表す型のノードです。識別子の名前は<code>Name</code>フィールドに、識別子の位置は<code>NamePos</code>フィールドに保持されます。<code>Obj</code>フィールドには識別子の種類（変数や関数）が入りますが、構文解析では式だけだとそれが判断できないため、<code>Bad</code>が入っています。</p>
+<p>第2項を表す<code>Y</code>は、<code>*ast.BasicLit</code>というリテラルを表す型のノードです。リテラルとは、<code>&#34;hoge&#34;</code>などの文字列リテラルや<code>123</code>などの数値リテラルを表します。<code>Kind</code>フィールドには、リテラルの種類である、<code>token.INT</code>や<code>token.STRING</code>などの値が入ります。Valueフィールドには、リテラルの値が種類に問わず文字列で入っています。<code>token.INT</code>の場合は、<code>strconv.Atoi</code>などで文字列からint型に変換して利用します。<code>token.STRING</code>の場合は<code>&#34;\&#34;hoge\&#34;&#34;</code>のように、ダブルクォートでさらに囲まれているため、<code>strcov.Unquote</code>でダブルクォートを外してやる必要があります。</p>
+<aside class="special"><p><strong><code>true</code></strong><strong>や</strong><strong><code>false</code></strong><strong>はリテラル？</strong></p>
+<p><code>true</code>や<code>false</code>は識別子になるため、<code>*ast.BasicLit</code>ではなく<code>*ast.Ident</code>型になります。ブロックスコープやパッケージスコープで上書きもできてしまうため、ちゃんと処理するためには定義されたスコープをチェックする必要があります。</p>
+</aside>
+<p>このように、構文解析をし、抽象構文木（AST）を得ることで、ソースコードを構造的に扱うことができるようになります。抽象構文木（AST）のノードは<code>ast.Node</code>というインタフェースで統一的に扱われています。しかし、実際にはそれぞれのノードは<code>*ast.BinaryExpr</code>や<code>*ast.Ident</code>のように具象型で表され、それぞれのフィールドやメソッドからさまざまな情報が取得できます。抽象構文木（AST）のノードを表す型に、どのようなものが存在するか知るためには、<code>go/ast</code>パッケージの<a href="https://golang.org/pkg/go/ast" target="_blank">APIドキュメント</a>で確認すると良いでしょう。</p>
+<h2>ファイルの構文解析</h2>
+<p>続いてファイル単位で構文解析を行ってみましょう。<code>2_parsefile</code>というディレクトリにある<code>main.go</code>をみてみると、次のようになっています。</p>
+<pre><code>package main
+
+import (
+        &#34;fmt&#34;
+        &#34;go/ast&#34;
+        &#34;go/parser&#34;
+        &#34;go/token&#34;
+        &#34;log&#34;
+)
+
+func main() {
+        // ファイルごとのトークンの位置を記録するFileSetを作成する
+        fset := token.NewFileSet()
+
+        // ファイル単位で構文解析を行う
+        f, err := parser.ParseFile(fset, &#34;_gopher.go&#34;, nil, 0)
+        if err != nil {
+                log.Fatal(&#34;Error:&#34;, err)
+        }
+
+        // 抽象構文木を深さ優先で探索する
+        ast.Inspect(f, func(n ast.Node) bool {
+
+                // 識別子ではない場合は無視
+                ident, ok := n.(*ast.Ident)
+                if !ok {
+                        return true
+                }
+
+                // 識別子がGopherという名前でなければ無視
+                if ident.Name != &#34;Gopher&#34; {
+                        return true
+                }
+
+                fmt.Println(fset.Position(ident.Pos()))
+
+                return true
+        })
+}</code></pre>
+<p>このコードは&#34;ソースコードからGopherをさがせ！&#34;で挙げたソースコードの中から<code>Gopher</code>という文字列が識別子として現れた場所を表示します。実行すると次のような結果が出力されます。なお、各行<strong>ソースコード名:行数:バイト数の順</strong>で場所が表示されています。</p>
+<pre>$ cd 2_parsefile
+$ go run main.go
+_gopher.go:7:6
+_gopher.go:8:2
+_gopher.go:14:11
+_gopher.go:18:24
+_gopher.go:19:12
+_gopher.go:19:19</pre>
+<p>この結果、<code>Gopher</code>という識別子が6箇所で現れていることが分かります。それでは具体的にどのように解析を行っているのか見ていきましょう。</p>
+<p>まずは、<code>*token.FileSet</code>という、トークンの位置を記録するための型のfsetという変数を生成しています。<code>*token.FileSet</code>型の値は、<code>parser.ParseExprFrom</code>や<code>parser.ParseFile</code>の第1引数に出力引数として渡すことで、内部で行われる字句解析の際に各トークンのファイル上の位置（どのファイルの何行目の何バイト目か）を記録してくれます。そうすることで、トークンの位置を<code>int</code>型をベースにした、<a href="https://golang.org/pkg/go/token/#Pos" target="_blank"><code>token.Pos</code>型</a>という整数型で扱うことができ、複数のファイルにまたがって、一意にトークンの位置を表現できます。整数で表された値は、<code>*token.FileSet</code>型の<code>Position</code>メソッドを呼び出すことで、<code>token.Position</code>型に変換することができます。<code>token.Position</code>型からは、ファイル名は行数などが取得することができます。</p>
+<p>次に、<code>parser.ParseFile</code>でファイル単位でソースコードの構文解析を行っています。この関数の引数は4つあり、第1引数はトークンの位置を記録するための<code>*token.FileSet</code>、第2引数はファイル名、第3引数はソースコードの値、第4引数が構文解析のモードです。第3引数の型は<code>interface{}</code>であり、<code>nil</code>の場合には、第2引数で指定したファイル名を利用し、構文解析を行います。第3引数に<code>io.Reader</code>や文字列、バイトスライスが指定された場合は、それらをソースコードとして構文解析します。ここでは、ソースコードからGopherをさがせ！で挙げたソースコードを<code>_gopher.go</code>として保存し、それを構文解析しています。第4引数のモードでは、コメントも含めて構文解析を行う<code>parser.ParseComments</code>などのモードが指定できます。ここではデフォルトのモードを使いたいため、<code>0</code>を指定しています。<code>parser.ParseFile</code>を実行すると、ファイルを表す抽象構文木（AST）のノードである、<code>*ast.File</code>型の値が取得されます。</p>
+<p>最後に取得した<code>*ast.File</code>型の値をルートノードとして、深さ優先で探索を行っています。<code>ast.Inspect</code>は第1引数で与えられたノードをルートノードとして、各ノードを探索し、第2引数で渡された<code>func(ast.Node) bool</code>型の関数を適用していきます。この関数の引数は各ノードの値で、戻り値はそのノードの子ノードを探索するかどうかを表します。戻り値が<code>true</code>の場合には、子ノードを探索し、<code>false</code>の場合は探索をやめ、親のノードの処理に戻ります。この場合、各ノードが<code>*ast.Ident</code>以外の場合は無視をし、<code>*ast.Ident</code>の場合は名前が<code>Gopher</code>であるかチェックしています。名前が<code>Gopher</code>の場合は、<code>*token.FileSet</code>型の<code>Position</code>メソッドでノードの位置を<code>token.Position</code>型に変換し、標準出力に出力しています。</p>
+<p>このように、構文解析を行うことで抽象構文木（AST）から識別子などの情報を取得できることが分かりました。しかし、これだけでは識別子が型なのか変数なのか、フィールドなのか完全に区別することはできません。実際に、<code>2_parsefile/main.go</code>を実行した結果は、次の6箇所を指していますが、型だけではなくフィールドも混じっています。</p>
+<pre><code>type Gopher struct {
+        Gopher string `json:&#34;gopher&#34;`
+        gogopher.Gopher = gopher
+func GOPHER() (gopher *Gopher) {
+        gopher = &amp;Gopher{Gopher: &#34;gopher&#34;}</code></pre>
+<p>最初の目的を思い出すと、<strong>ソースコード中のGopher型を参照している部分の抽出</strong>なのでこれでは不十分です。そこで、次に構文解析に加えて型チェックを行うことでより絞り込んで行きましょう。</p>
 
 
       </google-codelab-step>
     
       <google-codelab-step label="型チェック" duration="14">
-        
+        <p>最後に型チェックを行うことでGopherという名前の識別子が型として用いられている部分だけに絞り込んでいきましょう。<code>3_typeckeck</code>というディレクトリにある<code>main.go</code>をみてみると、次のようになっています。</p>
+<pre><code>package main
+
+import (
+        &#34;fmt&#34;
+        &#34;go/ast&#34;
+        &#34;go/importer&#34;
+        &#34;go/parser&#34;
+        &#34;go/token&#34;
+        &#34;go/types&#34;
+        &#34;log&#34;
+)
+
+func main() {
+        // ファイルごとのトークンの位置を記録するFileSetを作成する
+        fset := token.NewFileSet()
+
+        // ファイル単位で構文解析を行う
+        f, err := parser.ParseFile(fset, &#34;_gopher.go&#34;, nil, 0)
+        if err != nil {
+                log.Fatal(&#34;Error:&#34;, err)
+        }
+
+        // 識別子が定義または利用されてる部分を記録する
+        defsOrUses := map[*ast.Ident]types.Object{}
+        info := &amp;types.Info{
+                Defs: defsOrUses,
+                Uses: defsOrUses,
+        }
+
+        // 型チェックを行うための設定
+        config := &amp;types.Config{
+                Importer: importer.Default(),
+        }
+
+        // 型チェックを行う
+        _, err = config.Check(&#34;main&#34;, fset, []*ast.File{f}, info)
+        if err != nil {
+                log.Fatal(&#34;Error:&#34;, err)
+        }
+
+        // 抽象構文木を深さ優先で探索する
+        ast.Inspect(f, func(n ast.Node) bool {
+
+                // 識別子ではない場合は無視
+                ident, ok := n.(*ast.Ident)
+                if !ok {
+                        return true
+                }
+
+                // 識別子がGopherという名前でなければ無視
+                if ident.Name != &#34;Gopher&#34; {
+                        return true
+                }
+
+                // 識別子が定義または利用されている部分の情報を取得
+                obj := defsOrUses[ident]
+                if obj == nil {
+                        return true
+                }
+
+                // 型情報を取得し名前付き型でなければ無視
+                typ := obj.Type()
+                if _, ok := typ.(*types.Named); !ok {
+                        return true
+                }
+
+                fmt.Println(fset.Position(ident.Pos()))
+
+                return true
+        })
+}</code></pre>
+<p>このコードを実行すると次のような結果が得られます。構文解析だけを行った結果より絞り込まれていることが分かります。6箇所から3箇所まで絞り込まれています。</p>
+<pre>$ cd 3_typecheck
+$ go run main.go
+_gopher.go:7:6
+_gopher.go:18:24
+_gopher.go:19:12</pre>
+<p>実際に確認してみると、次の3箇所になります。どこも<code>Gopher</code>を識別子として使用しているだけではなく、型として使用していることが分かります。</p>
+<pre><code>type Gopher struct { // ここ
+func GOPHER() (gopher *Gopher) { // ここ
+        gopher = &amp;Gopher{Gopher: &#34;gopher&#34;} // ここ（フィールドは除く）</code></pre>
+<p>さて、実行結果を見たところで<code>3_typeckeck/main.go</code>で具体的に何が行われているか見ていきましょう。構文解析を行っている部分は、<code>2_parsefile/main.go</code>とほとんど同じです。<code>diff</code>を取ってみると、型チェックを行う処理が追加されていることが分かります。</p>
+<pre>$ diff 2_parsefile/main.go 3_typecheck/main.go
+5a6
+&gt;       &#34;go/importer&#34;
+7a9
+&gt;       &#34;go/types&#34;
+20a23,40
+&gt;       // 識別子が定義または利用されてる部分を記録する
+&gt;       defsOrUses := map[*ast.Ident]types.Object{}
+&gt;       info := &amp;types.Info{
+&gt;               Defs: defsOrUses,
+&gt;               Uses: defsOrUses,
+&gt;       }
+&gt;
+&gt;       // 型チェックを行うための設定
+&gt;       config := &amp;types.Config{
+&gt;               Importer: importer.Default(),
+&gt;       }
+&gt;
+&gt;       // 型チェックを行う
+&gt;       _, err = config.Check(&#34;main&#34;, fset, []*ast.File{f}, info)
+&gt;       if err != nil {
+&gt;               log.Fatal(&#34;Error:&#34;, err)
+&gt;       }
+&gt;
+34a55,66
+&gt;               // 識別子が定義または利用されている部分の情報を取得
+&gt;               obj := defsOrUses[ident]
+&gt;               if obj == nil {
+&gt;                       return true
+&gt;               }
+&gt;
+&gt;               // 型情報を取得し名前付き型でなければ無視
+&gt;               typ := obj.Type()
+&gt;               if _, ok := typ.(*types.Named); !ok {
+&gt;                       return true
+&gt;               }
+&gt;</pre>
+<p>まずはじめに、<code>*types.Info</code>型の値を作成しています。これは型チェックを行った結果を保持するための出力引数として用いられます。<code>types.Info</code>型の定義は次のようになっています。各フィールドの細かな定義は<a href="https://golang.org/pkg/go/types/#Info" target="_blank">APIドキュメント</a>を参照することをオススメしますが、よく用いるのは<code>Defs</code>と<code>Uses</code>です。<code>Defs</code>は識別子の定義されている箇所の情報を、<code>Uses</code>は識別子が使われている箇所の情報が記録されます。</p>
+<pre><code>type Info struct {
+        Types map[ast.Expr]TypeAndValue
+        Defs map[*ast.Ident]Object
+        Uses map[*ast.Ident]Object
+        Implicits map[ast.Node]Object
+        Selections map[*ast.SelectorExpr]*Selection
+        Scopes map[ast.Node]*Scope
+        InitOrder []*Initializer
+}</code></pre>
+<p>ここでは、<code>Defs</code>も<code>Uses</code>も区別する必要がないため、<code>defsOrUses</code>という名前のマップを<code>Defs</code>と<code>Uses</code>に設定しています。</p>
+<p>次に、型チェックを行うために必要な設定を<code>*types.Config</code>型の値として作成しています。ここでは特に特別な設定は必要ないですが、<code>Importer</code>フィールドだけは必要なため、デフォルトの<code>importer.Default</code>関数で返される値を設定しています。<code>Importer</code>フィールドで設定した値は、型チェックを行うソースコード中に現れる<code>import</code>文から依存するパッケージの情報を取得するために用いられます。また、デフォルトの<code>Importer</code>は通常の<code>GOROOT</code>や<code>GOPATH</code>を元に<code>import</code>文を解決します。</p>
+<p>そして、<code>*types.Config</code>型のCheckメソッドを呼ぶことで型チェックを行っています。<code>Check</code>メソッドは4つの引数を取ります。第1引数は、型チェックを行うパッケージのインポートパスです。ここでは<code>main</code>としています。第2引数は、字句解析時に記録したトークンの位置を保持した<code>*token.FileSet</code>型の値です。第3引数は、構文解析を行った結果であるファイル単位の抽象構文木のスライスです。パッケージは複数のファイルから構成されるため、第3引数は<code>*ast.File</code>型のスライスになっています。第4引数は、型チェックの結果を保持するために利用される<code>*types.Info</code>型の値で出力引数となります。</p>
+<p>最後に、<code>ast.Inspect</code>関数の第2引数で渡す関数の中で型チェックの結果を用いています。identには識別子を表すノードが入っているため、まずはこれをキーにしてdefsOrUsesから対応する情報があるか調べています。キーが存在する場合、<a href="https://golang.org/pkg/go/types/#Object" target="_blank"><code>types.Object</code>型</a>の値がマップから取得できます。この値を基に識別子の情報を詳しく調べていきます。</p>
+<p><code>types.Object</code>はインタフェースで、変数や型、関数などを表します。<code>Type</code>メソッドを呼び出すことで、そのオブジェクトに対応する型が取得できます。<code>Type</code>メソッドが返す<code>types.Type</code>型もインタフェースです。このインタフェースを実装した型として、<code>int</code>型や<code>string</code>型などを表す<code>types.Basic</code>型やインタフェースを表す<code>types.Interface</code>型、<code>type</code>キーワードで型定義を行って定義された型（ユーザ定義型）を表す<code>types.Named</code>型などがあります。</p>
+<p>ここでは、<code>Gopher</code>型を参照している部分を探したいので、<code>Type</code>メソッドで取得した値が<code>types.Named</code>型であるかをチェックしています。最終的には、識別子でかつ名前が<code>Gopher</code>であり、ユーザ定義型であるものを出力していることになります。</p>
+<aside class="special"><p><strong><code>types.Named</code></strong><strong>型から基になった型を取得するには？</strong></p>
+<p><code>type MyInt int</code>のように定義した場合、<code>MyInt</code>を表す<code>*types.Named</code>型の値からintを表す<code>types.Type</code>型の値を取得したい場合は、<a href="https://golang.org/pkg/go/types/#Named.Underlying" target="_blank">Underlyingメソッド</a>を用います。</p>
+</aside>
+<p>このように、型チェックを行うことで構文解析だけでは取得できない型に関数情報などを取得することができ、より精度の高い情報を知ることができます。ここではユーザ定義型の<code>Gopher</code>であることまでしかチェックしませんでしたが、型が定義されたスコープなども絞り込む条件に追加することもできます。</p>
+
 
       </google-codelab-step>
     
       <google-codelab-step label="おわりに" duration="1">
-        
+        <p>このコードラボでは、ソースコードを静的解析することで、識別子の位置や型情報などを取得する方法を解説しました。このコードラボで扱った内容だけでも多くのことをソースコードから得られることができ、自作の開発ツールに活かせることでしょう。</p>
+<p>このコードラボでは単一のソースコードしか扱いませんでしたが、<code>go/build</code>パッケージ（Go1.11からは<code>golang.org/x/tools/go/pacakge</code>パッケージ）などを使うとパッケージで使われているソースコードすべてに対して構文解析や型チェックを行ったりもします。ぜひ、標準パッケージである<a href="https://golang.org/pkg/go" target="_blank">goパッケージ</a>や順標準パッケージである<a href="https://golang.org/x/tools/go" target="_blank"><code>golang.org/x/tools/goパッケージ</code></a>の機能を覗いてみてください。今まで<code>grep</code>や<code>sed</code>を使ってソースコードをテキストファイルとして扱ってきた作業が、静的解析でGoのソースコードとして扱うことで、もっと賢く、精度も高く行えることに気づくでしょう。</p>
+
 
       </google-codelab-step>
     
