@@ -55,7 +55,8 @@
     
       <google-codelab-step label="Gitがインストールされていることを確認する" duration="1">
         <p>Google Cloud ShellではGitがプリインストールされています。<code>git version</code>でGitのバージョンが表示されることを確認しましょう。</p>
-<pre>$ git version</pre>
+<pre>$ git version
+git version 2.11.0</pre>
 
 
       </google-codelab-step>
@@ -63,7 +64,8 @@
       <google-codelab-step label="Google Cloud ShellでGoのバージョンを確認する" duration="1">
         <p>早速Goがインストールされているかを確認しましょう。</p>
 <p>Google Cloud Shellで<code>go version</code>を実行し、Goのバージョンを確認しましょう。次のように表示されるはずです。プリインストールされているバージョンは異なる可能性があります。</p>
-<pre>$ go version</pre>
+<pre>$ go version
+go version go1.10 linux/amd64</pre>
 
 
       </google-codelab-step>
@@ -94,13 +96,13 @@
 <p>コマンドを実行するとgoというディレクトリができているはずです。</p>
 <pre>$ ls
 go</pre>
-<p>ダウンロードしたGoのバージョンを確認してみましょう。ダウンロードしたGoのバイナリを明示的に指定して<code>go version</code>を実行します。プリインストールされているGoとは別のバージョンがj表示されれば成功です。</p>
-<pre>$ .go/bin/go version
+<p>ダウンロードしたGoのバージョンを確認してみましょう。ダウンロードしたGoのバイナリを明示的に指定して<code>go version</code>を実行します。プリインストールされているGoとは別のバージョンが表示されれば成功です。</p>
+<pre>$ ./go/bin/go version
 go version go1.9.7 linux/amd64</pre>
 <p>ダウンロードしたGoのバイナリを明示的に指定することで異なるバージョンのGoを利用することができます。</p>
 <h2>goコマンドでダウンロードしたバイナリを利用するように設定する</h2>
 <p>ダウンロードしたGoのバイナリを<code>go</code>コマンドで実行するように設定することも可能です。</p>
-<p>まずは環境変数の<code>GOROOT</code>を取得したGoのバイナリのパスで上書きします。次の例ではホームディレクトリにダウンロードした<code>go</code>ディレクトリを<code>$GOROOT</code>に上書きしています。</p>
+<p>まずは環境変数の<code>GOROOT</code>を取得したGoのバイナリのパスで上書きします。次の例ではホームディレクトリにダウンロードした<code>go</code>ディレクトリを<code>$GOROOT</code>に上書きしています。ホームディレクトリ以外にgoディレクトリをダウンロードした場合はそのパスを指定してください。</p>
 <pre>$ export GOROOT=$HOME/go/</pre>
 <p>最後に<code>$GROOT</code>を<code>$PATH</code>に追加しましょう。</p>
 <pre>$ export PATH=$GOROOT/bin:$PATH</pre>
