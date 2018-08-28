@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Hello, WebAssembly</title>
+</head>
+
+<body>
+    <!-- wasm_exec.jsを読み込む -->
+    <script src="wasm_exec.js"></script>
+    <script>
+        // WebAssembly.instantiateStreamingがない場合のポリフィル
+        if (!WebAssembly.instantiateStreaming) {
+            WebAssembly.instantiateStreaming = async (resp, importObject) => {
+                const source = await (await resp).arrayBuffer();
+                return await WebAssembly.instantiate(source, importObject);
+            };
+        }
+
+        // main.wasmにビルドされたGoのプログラムを読み込む
+        const go = new Go();
+        let mod, inst;
+        WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+            mod = result.module;
+            inst = result.instance;
+            // 実行ボタンを有効にする
+            document.getElementById("runButton").disabled = false;
+        });
+
+        // 実行ボタンを押されたときの処理
+        async function run() {
+            console.clear();
+            await go.run(inst);
+            inst = await WebAssembly.instantiate(mod, go.importObject);
+    }
+    </script>
+
+    <!-- 実行ボタン -->
+    <button onClick="run();" id="runButton" disabled>Run</button>
+</body>
+
+</html>

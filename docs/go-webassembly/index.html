@@ -25,7 +25,7 @@
                   feedback-link="https://github.com/golangtokyo/codelab/issues">
     
       <google-codelab-step label="はじめに" duration="1">
-        <p>ここではGoでWebAssemblyを扱う方法について解説を行います。GoのコードからWebAssemblyへのビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて学ぶことができます。なお、このコードラボでは、Go1.11以上のGoの開発環境を必要とします。</p>
+        <p>ここではGoでWebAssemblyを扱う方法について解説を行います。GoのコードからWebAssemblyへのビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて学ぶことができます。なお、このコードラボでは、Go1.11以上のGoの開発環境を必要とします。なお、コマンド等はmacOSのコマンドを元に表記してあるため、他のOSの場合には適宜読み替えてください。</p>
 <aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
 <p><a href="https://golangtokyo.github.io/codelab/cloud-shell-go-setup?index=codelab" target="_blank">こちら</a>のコードラボで紹介している、Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
 </aside>
@@ -33,13 +33,98 @@
 
       </google-codelab-step>
     
-      <google-codelab-step label="WebAssemblyとは？" duration="1">
-        
+      <google-codelab-step label="サンプルコードのダウンロード" duration="1">
+        <p>まずはGitHubからこのコードラボで使うサンプルコードをダウンロードしましょう。<code>git clone</code>するか、ZIPでダウンロードして解凍しましょう。</p>
+<pre>$ git clone https://github.com/golangtokyo/codelab.git</pre>
+<p><a href="https://github.com/golangtokyo/codelab/archive/master.zip" target="_blank"><paper-button class="colored" raised>ZIPでダウンロード</paper-button></a></p>
+<p>なお、このコードラボのサンプルコードは<code>go-webassembly</code>以下に入っています。</p>
+<pre>$ cd codelab/go-webassembly
+$ ls
+README.md</pre>
+
 
       </google-codelab-step>
     
-      <google-codelab-step label="ビルドしてみよう" duration="1">
-        
+      <google-codelab-step label="WebAssemblyとは？" duration="1">
+        <p>WebAssembly（wasm）とは、ブラウザで動くかすことのできるプログラミング言語とその周辺の技術やツールを指します。バイナリ形式で表され、スタックマシンの処理系で処理されるます。JavaScriptのようにブラウザに直接解釈されますが、JavaScriptより速度面で上回ることを目標に開発・仕様の策定が進んでいます。</p>
+<p>WebAssemblyはプログラマが直接バイナリ形式のコードを書くわけではなく、CやC++、Rustのような、さまざまな高級言語からコンパイルされることがほとんどです。Goにおいても、<a href="https://golang.org/doc/go1.11#wasm" target="_blank">Go1.11から</a>正式にGoの標準の機能として、GoのコードをWebAssemblyにコンパイルする機能が追加されました。</p>
+<p>それではさっそく、GoのコードからWebAsemmblyにビルドしてみましょう。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="ビルドしてみよう" duration="5">
+        <p>Goには、クロスコンパイルという機能があります。コンパイルを行うマシンのアーキテクチャやOS用のバイナリをビルドするだけではなく、別のアーキテクチャやOS向けのバイナリをビルドすることができます。</p>
+<p>例えば、macOSでWinodosやLinux向けのバイナリをクロスコンパイルすることが非常に簡単です。次のように、<code>GOOS</code>と<code>GOARCH</code>という環境変数を指定して、いつものように<code>go bulid</code>することでクロスコンパイルすることができます。</p>
+<pre># Windows(32ビット)向けにコンパイル
+$ GOOS=windows GOARCH=386 go build
+
+# Linux(64ビット)向けにコンパイル
+$ GOOS=linux GOARCH=amd64 go build</pre>
+<p>さて、同じようにWebAssemblyをクロスコンパイルしてみましょう。<code>1_hellowasm</code>ディレクトリ以下に行き、次のように<code>GOOS</code>を<code>js</code>、<code>GOARCH</code>を<code>wasm</code>にして<code>go build</code>を実行してみましょう。なお、ここでは<code>-o</code>オプションで出力ファイル名を指定しますが、特にしていなくてもビルドはできます。</p>
+<pre>$ ls
+index.html main.go
+$ GOOS=js GOARCH=wasm go build -o main.wasm
+$ ls
+index.html main.go main.wasm</pre>
+<p>生成された<code>main.wasm</code>を実行するため、次のように<code>GOROOT</code>から<code>wasm_exec.js</code>をコピーしてきましょう。<code>go env GOROOT</code>は<code>GOROOT</code>を取得するコマンドです。環境変数が設定されていれば、<code>$GOROOT</code>を参照しても構いません。また、Goの開発環境をバイナリでインストールした場合は、<a href="https://github.com/golang/go/blob/release-branch.go1.11/misc/wasm/wasm_exec.js" target="_blank">Goのリポジトリ</a>から直接<code>wasm_exec.js</code>をダウンロードしてきてください。</p>
+<pre>$ cp `go env GOROOT`/misc/wasm/wasm_exec.js .
+$ ls
+index.html   main.go      main.wasm    wasm_exec.js</pre>
+<p>次に、ブラウザで実行する前に<code>main.wasm</code>をNode.jsで実行してみましょう。手元の環境にNode.jsがない場合は、ここは読み飛ばして頂いて構いません。</p>
+<pre>$ node wasm_exec.js main.wasm
+Hello, WebAssembly!</pre>
+<p>続いてブラウザで動作させてみましょう。ここでは<code>index.html</code>を次のように定義することで<code>main.wasm</code>を読み込んでいます。</p>
+<pre><code>&lt;!doctype html&gt;
+&lt;html&gt;
+
+&lt;head&gt;
+    &lt;meta charset=&#34;utf-8&#34;&gt;
+    &lt;title&gt;Hello, WebAssembly&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;!-- wasm_exec.jsを読み込む --&gt;
+    &lt;script src=&#34;wasm_exec.js&#34;&gt;&lt;/script&gt;
+    &lt;script&gt;
+        // WebAssembly.instantiateStreamingがない場合のポリフィル
+        if (!WebAssembly.instantiateStreaming) {
+            WebAssembly.instantiateStreaming = async (resp, importObject) =&gt; {
+                const source = await (await resp).arrayBuffer();
+                return await WebAssembly.instantiate(source, importObject);
+            };
+        }
+
+        // main.wasmにビルドされたGoのプログラムを読み込む
+        const go = new Go();
+        let mod, inst;
+        WebAssembly.instantiateStreaming(fetch(&#34;main.wasm&#34;), go.importObject).then((result) =&gt; {
+            mod = result.module;
+            inst = result.instance;
+            // 実行ボタンを有効にする
+            document.getElementById(&#34;runButton&#34;).disabled = false;
+        });
+
+        // 実行ボタンを押されたときの処理
+        async function run() {
+            console.clear();
+            await go.run(inst);
+            inst = await WebAssembly.instantiate(mod, go.importObject);
+    }
+    &lt;/script&gt;
+
+    &lt;!-- 実行ボタン --&gt;
+    &lt;button onClick=&#34;run();&#34; id=&#34;runButton&#34; disabled&gt;Run&lt;/button&gt;
+&lt;/body&gt;
+
+&lt;/html&gt;</code></pre>
+<p>それでは、ひとつ上の階層にあるserver.goを用いてWebサーバを起動してみましょう。デフォルトだと<code>http://localhost:8080</code>でサーバが立ち上がります。ポート番号を変えたい場合は、<code>server.go</code>を編集して実行してください。</p>
+<pre>$ go run ../server.go .
+2018/08/28 01:01:25 Run Web Server on http://localhost:8080</pre>
+<p><code>http://localhost:8080</code>をChromeで開くと、<code>Run</code>ボタンが表示されていので、実行してみましょう。そうすると、図1のようにコンソールに<code>Hello, Assembly</code>と表示されます。</p>
+<p><img style="max-width: 543.36px" src="img/204c26d81faef81b.png"></p>
+<p>図1：ブラウザで実行した様子</p>
+
 
       </google-codelab-step>
     
