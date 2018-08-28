@@ -55,7 +55,7 @@ README.md</pre>
     
       <google-codelab-step label="ビルドしてみよう" duration="5">
         <p>Goには、クロスコンパイルという機能があります。コンパイルを行うマシンのアーキテクチャやOS用のバイナリをビルドするだけではなく、別のアーキテクチャやOS向けのバイナリをビルドすることができます。</p>
-<p>例えば、macOSでWinodosやLinux向けのバイナリをクロスコンパイルすることが非常に簡単です。次のように、<code>GOOS</code>と<code>GOARCH</code>という環境変数を指定して、いつものように<code>go bulid</code>することでクロスコンパイルすることができます。</p>
+<p>例えば、macOSでWindowsやLinux向けのバイナリをクロスコンパイルすることが非常に簡単です。次のように、<code>GOOS</code>と<code>GOARCH</code>という環境変数を指定して、いつものように<code>go bulid</code>することでクロスコンパイルすることができます。</p>
 <pre># Windows(32ビット)向けにコンパイル
 $ GOOS=windows GOARCH=386 go build
 
