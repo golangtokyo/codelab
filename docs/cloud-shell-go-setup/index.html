@@ -102,8 +102,10 @@ go version go1.9.7 linux/amd64</pre>
 <p>ダウンロードしたGoのバイナリを明示的に指定することで異なるバージョンのGoを利用することができます。</p>
 <h2>goコマンドでダウンロードしたバイナリを利用するように設定する</h2>
 <p>ダウンロードしたGoのバイナリを<code>go</code>コマンドで実行するように設定することも可能です。</p>
-<p>まずは環境変数の<code>GOROOT</code>を取得したGoのバイナリのパスで上書きします。次の例ではホームディレクトリにダウンロードした<code>go</code>ディレクトリを<code>$GOROOT</code>に上書きしています。ホームディレクトリ以外にgoディレクトリをダウンロードした場合はそのパスを指定してください。</p>
-<pre>$ export GOROOT=$HOME/go/</pre>
+<p>まずはダウンロードしたgoディレクトリの名前を変更しましょう。goディレクトリだとプリインストールされているものと紛らわしくなってしまうからです。ここではmy_goに変更しました。</p>
+<pre>$ mv go my_go</pre>
+<p>次に環境変数の<code>GOROOT</code>を取得したGoのバイナリのパスで上書きします。次の例ではmy_goディレクトリを<code>$GOROOT</code>に上書きしています。ホームディレクトリ以外にmy_goディレクトリが存在する場合はそのパスを指定してください。</p>
+<pre>$ export GOROOT=$HOME/my_go/</pre>
 <p>最後に<code>$GROOT</code>を<code>$PATH</code>に追加しましょう。</p>
 <pre>$ export PATH=$GOROOT/bin:$PATH</pre>
 <p>これで設定は完了です。<code>go version</code>を実行してみましょう。次のようにダウンロードしたGoのバイナリのバージョンが表示されれば成功です。</p>
