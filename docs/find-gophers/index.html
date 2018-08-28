@@ -28,7 +28,6 @@
         <p>このコードラボでは、Goのソースコードの静的解析を扱います。静的解析を行うことにより、自作のコードチェッカーやリファクタリングツールを作ることができます。</p>
 <p>静的解析はいっけん難しそうに感じますが、Goの標準パッケージには、静的解析を行うための<code>go</code>パッケージがあり、詳しい知識がなくても簡単に静的解析が行えるようになっています。</p>
 <p>このコードラボが終わる頃には、ソースコードをパースして抽象構文木（AST）を構築し、型チェックによって変数の定義位置や使用している位置などを解析することができるようになります。</p>
-<p>静的解析を行えるようになると、自作のコードチェッカーやリファクタリングツール、コードジェネレータを簡単に作ることができるようになります。ぜひ、このコードラボにチャレンジしてみてください！</p>
 <aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
 <p><a href="https://golangtokyo.github.io/codelab/cloud-shell-go-setup?index=codelab" target="_blank">こちら</a>のコードラボで紹介している、Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
 </aside>
@@ -284,7 +283,7 @@ $ go run main.go
     16  }</pre>
 <p><code>v + 1</code>に<code>parser.ParseExpr</code>を実行すると、2項演算式を表す<code>*ast.BinaryExpr</code>をルートノードとした抽象構文木（AST）になります。<code>*ast.BinaryExpr</code>は2つの項を子ノードとして持ち、それぞれ<code>X</code>と<code>Y</code>という名前のフィールドとして保持されています。</p>
 <p>第1項を表す<code>X</code>は、<code>*ast.Ident</code>という識別子（変数名や関数名など）を表す型のノードです。識別子の名前は<code>Name</code>フィールドに、識別子の位置は<code>NamePos</code>フィールドに保持されます。<code>Obj</code>フィールドには識別子の種類（変数や関数）が入りますが、構文解析では式だけだとそれが判断できないため、<code>Bad</code>が入っています。</p>
-<p>第2項を表す<code>Y</code>は、<code>*ast.BasicLit</code>というリテラルを表す型のノードです。リテラルとは、<code>&#34;hoge&#34;</code>などの文字列リテラルや<code>123</code>などの数値リテラルを表します。<code>Kind</code>フィールドには、リテラルの種類である、<code>token.INT</code>や<code>token.STRING</code>などの値が入ります。Valueフィールドには、リテラルの値が種類に問わず文字列で入っています。<code>token.INT</code>の場合は、<code>strconv.Atoi</code>などで文字列からint型に変換して利用します。<code>token.STRING</code>の場合は<code>&#34;\&#34;hoge\&#34;&#34;</code>のように、ダブルクォートでさらに囲まれているため、<code>strcov.Unquote</code>でダブルクォートを外してやる必要があります。</p>
+<p>第2項を表す<code>Y</code>は、<code>*ast.BasicLit</code>というリテラルを表す型のノードです。リテラルとは、<code>&#34;hoge&#34;</code>などの文字列リテラルや<code>123</code>などの数値リテラルを表します。<code>Kind</code>フィールドには、リテラルの種類である、<code>token.INT</code>や<code>token.STRING</code>などの値が入ります。<code>Value</code>フィールドには、リテラルの値が種類に問わず文字列で入っています。<code>token.INT</code>の場合は、<code>strconv.Atoi</code>などで文字列からint型に変換して利用します。<code>token.STRING</code>の場合は<code>&#34;\&#34;hoge\&#34;&#34;</code>のように、ダブルクォートでさらに囲まれているため、<code>strcov.Unquote</code>でダブルクォートを外してやる必要があります。</p>
 <aside class="special"><p><strong><code>true</code></strong><strong>や</strong><strong><code>false</code></strong><strong>はリテラル？</strong></p>
 <p><code>true</code>や<code>false</code>は識別子になるため、<code>*ast.BasicLit</code>ではなく<code>*ast.Ident</code>型になります。ブロックスコープやパッケージスコープで上書きもできてしまうため、ちゃんと処理するためには定義されたスコープをチェックする必要があります。</p>
 </aside>
