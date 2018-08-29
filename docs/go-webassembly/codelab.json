@@ -4,7 +4,7 @@
   "format": "html",
   "prefix": "/codelab/",
   "mainga": "UA-49880327-14",
-  "updated": "2018-08-29T15:27:25Z",
+  "updated": "2018-08-29T17:12:22Z",
   "id": "go-webassembly",
   "duration": 30,
   "title": "GoでWebAssemblyに触れよう",
@@ -12,7 +12,7 @@
   "summary": "このコードラボでは、GoでWebAssemblyを扱う方法について解説を行います。ビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて学ぶことができます。",
   "theme": "go",
   "status": [
-    "draft"
+    "published"
   ],
   "category": [
     "Go",
