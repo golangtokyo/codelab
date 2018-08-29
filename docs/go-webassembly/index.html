@@ -25,7 +25,8 @@
                   feedback-link="https://github.com/golangtokyo/codelab/issues">
     
       <google-codelab-step label="はじめに" duration="1">
-        <p>ここではGoでWebAssemblyを扱う方法について解説を行います。GoのコードからWebAssemblyへのビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて学ぶことができます。なお、このコードラボでは、Go1.11以上のGoの開発環境を必要とします。なお、コマンド等はmacOSのコマンドを元に表記してあるため、他のOSの場合には適宜読み替えてください。</p>
+        <p>ここではGoでWebAssemblyを扱う方法について解説を行います。GoのコードからWebAssemblyへのビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて学ぶことができます。このコードラボを学ぶことで、Goで書いたプログラムがWebブラウザ上で動かせるようになります。</p>
+<p>なお、このコードラボでは、Go1.11以上のGoの開発環境を必要とします。なお、コマンド等はmacOSのコマンドを元に表記してあるため、他のOSの場合には適宜読み替えてください。</p>
 <aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
 <p><a href="https://golangtokyo.github.io/codelab/cloud-shell-go-setup?index=codelab" target="_blank">こちら</a>のコードラボで紹介している、Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
 </aside>
@@ -53,7 +54,7 @@ README.md</pre>
 
       </google-codelab-step>
     
-      <google-codelab-step label="ビルドしてみよう" duration="5">
+      <google-codelab-step label="ビルドしてみよう" duration="6">
         <p>Goには、クロスコンパイルという機能があります。コンパイルを行うマシンのアーキテクチャやOS用のバイナリをビルドするだけではなく、別のアーキテクチャやOS向けのバイナリをビルドすることができます。</p>
 <p>例えば、macOSでWindowsやLinux向けのバイナリをクロスコンパイルすることが非常に簡単です。次のように、<code>GOOS</code>と<code>GOARCH</code>という環境変数を指定して、いつものように<code>go bulid</code>することでクロスコンパイルすることができます。</p>
 <pre># Windows(32ビット)向けにコンパイル
@@ -128,18 +129,208 @@ Hello, WebAssembly!</pre>
 
       </google-codelab-step>
     
-      <google-codelab-step label="JavaScriptのオブジェクトを扱う" duration="1">
-        
+      <google-codelab-step label="JavaScriptのオブジェクトを扱う" duration="10">
+        <h2><code>js.Value</code>と<code>js.Type</code></h2>
+<p>次に、JavaScriptのオブジェクトを扱う方法について学びましょう。GoからJavaScriptのオブジェクトを扱うためには、Go1.11から標準パッケージに入った<code>syscall/js</code>パッケージを用います。</p>
+<p>Goの上ではJavaScriptのオブジェクトは、<code>js.Value</code>型という値で表現されます。Goの値を<code>js.Value</code>型に変換するためには、<code>js.ValueOf</code>という関数を用います。<code>js.ValueOf</code>関数は引数にGoの任意の値を<code>interface{}</code>型（どんな型の値でも入る）として受け取り、js.Value型の値を戻り値として返す関数です。</p>
+<p>Goの値とJavaScriptの値は表1のような対応になっています。</p>
+<p>表1：Goの値とJavaScriptの値の対応</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>Go</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>JavaScript</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>js.Value</code></p>
+</td><td colspan="1" rowspan="1"><p>JavaScriptの任意の値</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>js.TypedArray</code></p>
+</td><td colspan="1" rowspan="1"><p>typed array</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>js.Callback</code></p>
+</td><td colspan="1" rowspan="1"><p>関数</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>nil</code></p>
+</td><td colspan="1" rowspan="1"><p><code>null</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>bool</code></p>
+</td><td colspan="1" rowspan="1"><p><code>Boolean</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>整数と浮動小数点数</p>
+</td><td colspan="1" rowspan="1"><p><code>Number</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>string</code></p>
+</td><td colspan="1" rowspan="1"><p><code>String</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>[]interface{}</code></p>
+</td><td colspan="1" rowspan="1"><p>新しい配列</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>map[string]interface{}</code></p>
+</td><td colspan="1" rowspan="1"><p>新しいオブジェクト</p>
+</td></tr>
+</table>
+<p>JavaScript上の型は、<code>js.Type</code>型として表現されます。<code>js.Type</code>型は次のように定義されており、<code>js.Value</code>型の<code>Type</code>メソッドから取得することができます。</p>
+<pre><code>type Type int
+const (
+    TypeUndefined Type = iota
+    TypeNull
+    TypeBoolean
+    TypeNumber
+    TypeString
+    TypeSymbol
+    TypeObject
+    TypeFunction
+)</code></pre>
+<p><code>js.Value</code>型はすべてのJavaScript上の値を1つの型として表現しているため、各メソッドが予期しない値に対して呼ばれた場合に、<code>panic</code>を起こしてしまいます。例えば、<code>Int</code>メソッドは<code>js.Value</code>型の値を数値として扱い、その値をGoの<code>int</code>型として取得することができます。しかし、<code>js.Value</code>型は関数や文字列の値も扱うことができるため、数値ではない値に呼ばれた場合には<code>panic</code>が発生します。</p>
+<p>そのため、<code>js.Type</code>型の値を用いることで<code>js.Value</code>型の値が具体的にはどのような型なのかをハンドリングすることができ、panicを避けることができます。例えば、<code>Int</code>メソッドの場合は、次のように<code>Type</code>メソッドが<code>js.TypeNumber</code>を返したときのみ呼ぶほうが良いでしょう。</p>
+<pre><code>func printNumber(v js.Value) {
+        if v.Type() == js.TypeNumber {
+                fmt.Printf(&#34;%d\n&#34;, v.Int())
+        }
+}</code></pre>
+<aside class="special"><p><strong><code>GOOS=js GOARCH=wasm</code></strong><strong>の時だけビルド対象にするには</strong></p>
+<p><a href="https://golang.org/pkg/go/build/#hdr-Build_Constraints" target="_blank">build constraints（ビルドタグ）</a>という機能を用いると、特定のOSやアーキテクチャ向けのビルドのときにしか、そのGoファイルをビルドしないという成約をつけることができます。<code>syscall/js</code>パッケージは<code>GOOS=js GOARCH=wasm</code>の環境でしか動作しないので、<code>js</code>と<code>wasm</code>のビルドタグで他の環境でビルドされないようにしておくとよいでしょう。</p>
+</aside>
+<h2>DOMの操作</h2>
+<p><code>js.Value</code>型を用いることでJavaScriptのオブジェクトをGo上で扱うことができることが分かりました。それでは実際に、GoからHTMLのDOMを操作してみましょう。</p>
+<p><code>2_dom</code>に移動し<code>main.go</code>をビルドして、Webサーバを立ち上げてみましょう。</p>
+<pre>$ cd 2_dom
+$ GOOS=js GOARCH=wasm go build -o main.wasm
+$ cp `go env GOROOT`/misc/wasm/wasm_exec.js .
+$ go run ../server.go .
+2018/08/28 02:20:25 Run Web Server on http://localhost:8080</pre>
+<p><code>http://localhost:8080</code>にアクセスすると、図2のように表示されるはずです。なお、赤い文字や記号は分かりやすいように画像に注釈をつけているだけで実際には表示されません。</p>
+<p><img style="max-width: 602.00px" src="img/73b9cf51162bffa0.png"></p>
+<p>図2：DOMの操作のサンプルを実行した様子</p>
+<p>Runボタンを押してGoのプログラムを実行すると、図3のように<code>Hello, World</code>が<code>Hello, WebAssembly</code>に変わります。</p>
+<p><img style="max-width: 602.00px" src="img/a065f3dd4a017875.png"></p>
+<p>図3：GoのプログラムからHTMLの内容を変更した様子</p>
+<p>それではソースコードを確認してみましょう。<code>2_dom/main.go</code>は次のようになっています。</p>
+<pre><code>package main
+
+import &#34;syscall/js&#34;
+
+func main() {
+        // グローバルオブジェクト（Webブラウザはwindow）の取得
+        window := js.Global()
+
+        // window.document.getElementById(&#34;message&#34;)を実行
+        message := window.Get(&#34;document&#34;).Call(&#34;getElementById&#34;, &#34;message&#34;)
+
+        // HTMLを変更する
+        message.Set(&#34;innerHTML&#34;, &#34;Hello, WebAssembly&#34;)
+}</code></pre>
+<p>また、HTMLは次のようになっています。<code>1_hellowasm/index.html</code>と比べると、<code>div</code>タグが追加されています。</p>
+<pre><code>&lt;!doctype html&gt;
+&lt;html&gt;
+
+&lt;head&gt;
+    &lt;meta charset=&#34;utf-8&#34;&gt;
+    &lt;title&gt;Manipulating DOM&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;!-- wasm_exec.jsを読み込む --&gt;
+    &lt;script src=&#34;wasm_exec.js&#34;&gt;&lt;/script&gt;
+    &lt;script&gt;
+        // WebAssembly.instantiateStreamingがない場合のポリフィル
+        if (!WebAssembly.instantiateStreaming) {
+            WebAssembly.instantiateStreaming = async (resp, importObject) =&gt; {
+                const source = await (await resp).arrayBuffer();
+                return await WebAssembly.instantiate(source, importObject);
+            };
+        }
+
+        // main.wasmにビルドされたGoのプログラムを読み込む
+        const go = new Go();
+        let mod, inst;
+        WebAssembly.instantiateStreaming(fetch(&#34;main.wasm&#34;), go.importObject).then((result) =&gt; {
+            mod = result.module;
+            inst = result.instance;
+            // 実行ボタンを有効にする
+            document.getElementById(&#34;runButton&#34;).disabled = false;
+        });
+
+        // 実行ボタンを押されたときの処理
+        async function run() {
+            console.clear();
+            await go.run(inst);
+            inst = await WebAssembly.instantiate(mod, go.importObject);
+    }
+    &lt;/script&gt;
+
+    &lt;!-- 中身を入れ替えるDIV --&gt;
+    &lt;div id=&#34;message&#34;&gt;Hello, World&lt;/div&gt;
+
+    &lt;!-- 実行ボタン --&gt;
+    &lt;button onClick=&#34;run();&#34; id=&#34;runButton&#34; disabled&gt;Run&lt;/button&gt;
+&lt;/body&gt;
+
+&lt;/html&gt;</code></pre>
+<p>DOMをGoから扱うためには、まずはJavaScriptのグローバルオブジェクト（ブラウザの場合は<code>window</code>）を取得する必要があります。グローバルオブジェクトは、<code>js.Global</code>関数を呼ぶことで取得することができます。</p>
+<p>次に、メッセージを変えるために、<code>id</code>が<code>message</code>である<code>div</code>要素を<code>getElementById</code>で取得しています。JavaScriptのオブジェクトのプロパティを取得したい場合は、<code>js.Value</code>型の<code>Get</code>メソッドを用いています。そして、JavaScriptのメソッドを呼び出したい場合は<code>Call</code>メソッドを用いることで呼び出すことができます。つまり、<code>window.Get(&#34;document&#34;).Call(&#34;getElementById&#34;, &#34;message&#34;)</code>でJavaScriptの<code>window.document.getElementById(&#34;message&#34;)</code>と同様になります。</p>
+<p>最後に、<code>getElementById</code>で取得したオブジェクトの<code>innerHTML</code>を<code>Hello, World</code>から<code>Hello, WebAssembly</code>に変えます。JavaScriptのオブジェクトのプロパティを設定するには、<code>js.Value</code>型の<code>Set</code>メソッドを用います。つまり、<code>message.Set(&#34;innerHTML&#34;, &#34;Hello, WebAssembly&#34;)</code>がJavaScriptの<code>message.innerHTML = &#34;Hello, WebAssembly&#34;</code>に対応します。</p>
+
 
       </google-codelab-step>
     
-      <google-codelab-step label="コールバックを設定する" duration="1">
-        
+      <google-codelab-step label="クリックイベントを処理する" duration="10">
+        <p>DOMを操作する方法を学んだところで、クリックイベントを処理する方法について学びましょう。JavaScriptでは、HTMLの要素に対して次のようにイベントリスナーを設定することでクリックイベントをハンドリングします。</p>
+<pre><code>var message = document.getElementById(&#34;message&#34;);
+message.addEventListener(&#34;click&#34;, function(e) {
+    message.innerHTML = &#34;Clicked!!&#34;;
+});</code></pre>
+<p><code>3_clickevent</code>以下にクリックイベントを処理するサンプルコードが入っています。まずはビルドして動作確認をしてみましょう。</p>
+<pre>$ cd 3_clickevent
+$ GOOS=js GOARCH=wasm go build -o main.wasm
+$ cp `go env GOROOT`/misc/wasm/wasm_exec.js .
+$ go run ../server.go .
+2018/08/28 02:20:25 Run Web Server on http://localhost:8080</pre>
+<p><code>http://localhost:8080</code>にアクセスすると図4のようなページが表示されます。<code>Run</code>ボタンを押すと、Goで書いたプログラムが実行され、クリックイベントのイベントリスナーが登録されます。</p>
+<p><img style="max-width: 602.00px" src="img/519e775d72fe2ccb.png"></p>
+<p>図4：クリックイベントのサンプルを動作させた様子</p>
+<p><code>Run</code>ボタンを押したあとに、<code>Hello, World</code>と表示されている部分を押すと、図5のように表示されている文字列が<code>Clicked!!</code>に変更されます。</p>
+<p><img style="max-width: 602.00px" src="img/59bb43a7f09b67eb.png"></p>
+<p>図5：クリックして表示される文字列が変わった様子</p>
+<p>さて、Goのコードを見てみましょう。<code>3_clickevent/main.go</code>は次のように定義されています。</p>
+<pre><code>package main
+
+import &#34;syscall/js&#34;
+
+func main() {
+        // グローバルオブジェクト（Webブラウザはwindow）の取得
+        window := js.Global()
+
+        // window.document.getElementById(&#34;message&#34;)を実行
+        message := window.Get(&#34;document&#34;).Call(&#34;getElementById&#34;, &#34;message&#34;)
+
+        // イベントリスナーとして登録するコールバックを作成
+        cb := js.NewCallback(func(args []js.Value) {
+                // HTMLを変更する
+                message.Set(&#34;innerHTML&#34;, &#34;Clicked!!&#34;)
+        })
+
+        // イベントリスナーの登録
+        // message.addEventListener(&#34;click&#34;, cb)
+        message.Call(&#34;addEventListener&#34;, &#34;click&#34;, cb)
+
+        // Goのプログラムを終了させない
+        select {}
+}</code></pre>
+<p><code>getElementById</code>でHTMLの要素を取得する部分は、<code>2_dom</code>のサンプルとあまり変わりはありません。しかし、このサンプルでは取得したHTMLの要素にクリックイベントのリスナーを設定しています。</p>
+<p>クリックイベントをハンドリングするには、JavaScriptで書いた例と同様に、<code>addEventListener</code>メソッドを呼び出し、クリックイベントのイベントリスナーとしてコールバック関数を登録する必要があります。</p>
+<p>コールバック関数は、Goの世界の関数をJavaScriptの世界の関数として<code>addEventListener</code>メソッドに渡す必要があるため、単純なGoの関数ではなく、<code>syscall/js</code>パッケージの<code>js.Callback</code>型として定義する必要があります。<code>js.Callback</code>型の値は、<code>js.NewCallback</code>関数を用いることで作成することができます。作成したコールバック関数は<code>addEventListener</code>メソッドの引数として渡しています。</p>
+<p><code>main</code>関数の最後にある<code>select{}</code>は<code>main</code>関数をブロックする役目があります。JavaScript側で発生したクリックイベントは、<code>syscall/js</code>パッケージで管理されているイベントループに通知されます。</p>
+<p>イベントループのゴールーチンは<code>main</code>関数が動いているゴールーチンは別ですが、<code>main</code>関数のゴールーチンが終わってしまうとGoで書いたプログラム自体が終了するため、イベントループのゴールーチンも一緒に終了してしまいます。Goのプログラムが終わってしまうとJavaScript側はイベントをハンドリングしてくれる相手がいないため、エラーを発生させます。</p>
+<aside class="warning"><p><strong>コールバック関数でデッドロックが起きる場合は</strong></p>
+<p>コールバック関数は1つのゴールーチンの中で1つずつ処理されます。そのため、コールバック関数の中で、コールバック関数によって結果を受け取るような処理があるとデッドロックが起きてしまいます。例えば、<code>net/http</code>パッケージの<code>http.Get</code>などの関数は<code>js/wasm</code>の環境では、<code>fetch</code>というJavaScriptの関数を用いて実装されています。そのため、内部でコールバック関数を用いています。もし、コールバック関数内でこれらの関数を呼び出したい場合は、別のゴールーチンを起動して呼び出す必要があります。</p>
+</aside>
+<p>ここではクリックイベントについて紹介しましたが、その他のイベントについても同様にハンドリングすることができます。また、<code>preventDefault</code>などの処理をしたい場合には、<a href="https://tip.golang.org/pkg/syscall/js/#NewEventCallback" target="_blank"><code>js.NewEventCallback</code></a>関数を用いるとよいでしょう。</p>
+
 
       </google-codelab-step>
     
       <google-codelab-step label="おわりに" duration="1">
-        
+        <p>このコードラボでは、Goで書かれたコードをWebAssemblyとしてビルドする方法やGoからJavaScriptのオブジェクトを扱う方法、コールバック関数について扱いました。このコードラボを基にぜひ何か作ってみてください。</p>
+
 
       </google-codelab-step>
     
