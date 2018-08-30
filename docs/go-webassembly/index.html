@@ -25,8 +25,8 @@
                   feedback-link="https://github.com/golangtokyo/codelab/issues">
     
       <google-codelab-step label="はじめに" duration="1">
-        <p>ここではGoでWebAssemblyを扱う方法について解説を行います。GoのコードからWebAssemblyへのビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて学ぶことができます。このコードラボを学ぶことで、Goで書いたプログラムがWebブラウザ上で動かせるようになります。</p>
-<p>なお、このコードラボでは、Go1.11以上のGoの開発環境を必要とします。なお、コマンド等はmacOSのコマンドを元に表記してあるため、他のOSの場合には適宜読み替えてください。</p>
+        <p>ここではGoでWebAssemblyを扱う方法について解説します。このコードラボを通してGoのコードからWebAssemblyへのビルドの仕方、GoからJavaScriptのAPIを扱う方法などについて知ることができます。このコードラボが終わる頃には、Goで書いたプログラムがWebブラウザ上で動かせるようになります。</p>
+<p>なお、このコードラボでは、Go1.11以上のGoの開発環境を必要とします。コマンド等はmacOSのコマンドを元に表記してあるため、他のOSの場合には適宜読み替えてください。</p>
 <aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
 <p><a href="https://golangtokyo.github.io/codelab/cloud-shell-go-setup?index=codelab" target="_blank">こちら</a>のコードラボで紹介している、Google Cloud Shellを使うと簡単にGoを試すことができます。</p>
 </aside>
@@ -41,13 +41,13 @@
 <p>なお、このコードラボのサンプルコードは<code>go-webassembly</code>以下に入っています。</p>
 <pre>$ cd codelab/go-webassembly
 $ ls
-README.md</pre>
+1_hellowasm 2_dom 3_clickevent README.md server.go</pre>
 
 
       </google-codelab-step>
     
       <google-codelab-step label="WebAssemblyとは？" duration="1">
-        <p>WebAssembly（wasm）とは、ブラウザで動くかすことのできるプログラミング言語とその周辺の技術やツールを指します。バイナリ形式で表され、スタックマシンの処理系で処理されるます。JavaScriptのようにブラウザに直接解釈されますが、JavaScriptより速度面で上回ることを目標に開発・仕様の策定が進んでいます。</p>
+        <p>WebAssembly（wasm）とは、ブラウザで動くかすことのできるプログラミング言語とその周辺の技術やツールを指します。バイナリ形式で表され、スタックマシンの処理系で処理されます。JavaScriptのようにブラウザに直接解釈されますが、JavaScriptより速度面で上回ることを目標に開発・仕様の策定が進んでいます。</p>
 <p>WebAssemblyはプログラマが直接バイナリ形式のコードを書くわけではなく、CやC++、Rustのような、さまざまな高級言語からコンパイルされることがほとんどです。Goにおいても、<a href="https://golang.org/doc/go1.11#wasm" target="_blank">Go1.11から</a>正式にGoの標準の機能として、GoのコードをWebAssemblyにコンパイルする機能が追加されました。</p>
 <p>それではさっそく、GoのコードからWebAsemmblyにビルドしてみましょう。</p>
 
@@ -62,7 +62,14 @@ $ GOOS=windows GOARCH=386 go build
 
 # Linux(64ビット)向けにコンパイル
 $ GOOS=linux GOARCH=amd64 go build</pre>
-<p>さて、同じようにWebAssemblyをクロスコンパイルしてみましょう。<code>1_hellowasm</code>ディレクトリ以下に行き、次のように<code>GOOS</code>を<code>js</code>、<code>GOARCH</code>を<code>wasm</code>にして<code>go build</code>を実行してみましょう。なお、ここでは<code>-o</code>オプションで出力ファイル名を指定しますが、特にしていなくてもビルドはできます。</p>
+<p>さて、同じようにWebAssemblyをクロスコンパイルしてみましょう。コンパイルするファイルは、<code>1_hellowasm</code>ディレクトリに入っている<code>main.go</code>です。<code>1_hellowasm/main.go</code>は次のように定義されています。</p>
+<pre><code>package main
+
+func main() {
+        println(&#34;Hello, WebAssembly!&#34;)
+}</code></pre>
+<p><code>println</code>関数で<code>Hello, WebAssembly</code>と表示する簡単なプログラムです。</p>
+<p>それでは、<code>1_hellowasm</code>ディレクトリ以下に行き、次のように<code>GOOS</code>を<code>js</code>、<code>GOARCH</code>を<code>wasm</code>にして<code>go build</code>を実行してみましょう。なお、ここでは<code>-o</code>オプションで出力ファイル名を指定しますが、特にしていなくてもビルドはできます。</p>
 <pre>$ ls
 index.html main.go
 $ GOOS=js GOARCH=wasm go build -o main.wasm
