@@ -1,0 +1,523 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Goでテストを書いてみよう</title>
+  <script src="/codelab/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="/codelab/elements/codelab.html">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <style is="custom-style">
+    body {
+      font-family: "Roboto",sans-serif;
+      background: var(--google-codelab-background, #F8F9FA);
+    }
+  </style>
+  
+</head>
+<body unresolved class="fullbleed">
+
+  <google-codelab title="Goでテストを書いてみよう"
+                  environment="web"
+                  feedback-link="https://github.com/golangtokyo/codelab/issues">
+    
+      <google-codelab-step label="はじめに" duration="1">
+        <p>このコードラボでは、時間によってあいさつ文を返す簡単なライブラリを作ります。そして、そのライブラリのテスト書いていくことで、テストのやりかたやテストしやすいGoのコードについて学ぶことができます。</p>
+<p>なお、コマンド等はmacOSのコマンドを元に表記してあるため、他のOSの場合には適宜読み替えてください。</p>
+<aside class="special"><p><strong>Goの開発環境がない場合は？</strong></p>
+<p><a href="https://golangtokyo.github.io/codelab/cloud-shell-go-setup?index=codelab" target="_blank">こちら</a>のコードラボで紹介している、Google Cloud Shellを使うと簡単にGoを試すことができます。また、Goの基礎を学びたい方は<a href="https://go-tour-jp.appspot.com/" target="_blank">A Tour of Go</a>で学ぶことができます。</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="サンプルコードのダウンロード" duration="1">
+        <p>まずはGitHubからこのコードラボで使うサンプルコードをダウンロードしましょう。<code>git clone</code>するか、ZIPでダウンロードして解凍しましょう。</p>
+<pre>$ git clone https://github.com/golangtokyo/codelab.git</pre>
+<p><a href="https://github.com/golangtokyo/codelab/archive/master.zip" target="_blank"><paper-button class="colored" raised>ZIPでダウンロード</paper-button></a></p>
+<p>なお、このコードラボのサンプルコードは<code>go-greeting</code>以下に入っています。</p>
+<pre>$ cd codelab/go-greeting
+$ ls
+1_helloworld 2_time 3_package 4_mock 5_helper 6_tabletest README.md</pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Hello, World" duration="2">
+        <p>まずは、単に&#34;こんにちは&#34;と表示するだけのプログラムを作ってみましょう。<code>1_helloworld/main.go</code>を見ると次のようになっています。</p>
+<pre><code>package main
+
+import &#34;fmt&#34;
+
+func main() {
+        fmt.Println(&#34;こんにちは&#34;)
+}</code></pre>
+<p>標準パッケージのひとつの<code>fmt</code>パッケージという書式に関するパッケージをインポートし、<code>fmt.Println</code>関数で標準出力に&#34;こんにちは&#34;と表示しているだけです。</p>
+<p>それでは、<code>1_helloworld/main.go</code>を実行してみましょう。ここでは<code>go run</code>コマンドを使って実行してみます。</p>
+<pre>$ go run main.go
+こんにちは</pre>
+<p>うまく実行できれば、ターミナル上に&#34;こんにちは&#34;と表示されているのが確認できるでしょう。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="timeパッケージを使ってみよう" duration="5">
+        <p>標準出力に&#34;こんにちは&#34;と表示しただけでは面白くありません。次に現在時刻によってあいさつ文を変えるようにしてみましょう。</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>時間</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>あいさつ文</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>04時00分 〜 09時59分</p>
+</td><td colspan="1" rowspan="1"><p>おはよう</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>10時00分 〜 16時59分</p>
+</td><td colspan="1" rowspan="1"><p>こんにちは</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>17時00分 〜 03時59分</p>
+</td><td colspan="1" rowspan="1"><p>こんばんは</p>
+</td></tr>
+</table>
+<p>Goの標準パッケージでは時間に関する関数や型を提供するとして<code>time</code>パッケージを提供しています。<code>time</code>パッケージには現在時刻を取得するために、<code>time.Now</code>関数が存在します。</p>
+<p><code>time.Now</code>関数で取得した値は<code>time.Time</code>型という時刻を表す型です。<code>time.Time</code>型の<code>Hour</code>メソッドを呼び出すことで<strong>時</strong>を取得することができます。</p>
+<p>これらを踏まえて<code>2_time/main.go</code>を見てみましょう。</p>
+<pre><code>package main
+
+import (
+        &#34;fmt&#34;
+        &#34;time&#34;
+)
+
+func main() {
+        greet()
+}
+
+func greet() {
+        h := time.Now().Hour()
+        switch {
+        case h &gt;= 4 &amp;&amp; h &lt;= 9:
+                fmt.Println(&#34;おはよう&#34;)
+        case h &gt;= 10 &amp;&amp; h &lt;= 16:
+                fmt.Println(&#34;こんにちは&#34;)
+        default:
+                fmt.Println(&#34;こんばんは&#34;)
+        }
+}</code></pre>
+<p>あいさつ文を表示する処理は、<code>main</code>関数から切り離し、<code>greet</code>関数を作りました。<code>greet</code>関数内では、<code>time.Now</code>関数で現在時刻を取得し、その値の<code>Hour</code>メソッドを呼び出すことで<strong>時</strong>を取得しています。取得した<strong>時</strong>を基に<code>switch</code>文で分岐し、時刻によってあいさつ文を変えています。</p>
+<p>それでは実行してみましょう。お昼に実行した場合は、実行結果は変わりませんが、夜や朝に実行すると&#34;おはよう&#34;や&#34;こんばんは&#34;と表示されるはずです。</p>
+<pre>$ go run main.go
+こんにちは</pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="パッケージを分けよう" duration="5">
+        <h2>ユーザ定義パッケージ</h2>
+<p>他の言語と同様に、Goでもユーザ定義のパッケージを作ることができます。ユーザ定義パッケージは、<code>fmt</code>パッケージや<code>time</code>パッケージなどの標準パッケージと同様に、インポートすることで利用することができます。</p>
+<p>それでは、あいさつ文を表示するパッケージとして<code>greeting</code>パッケージを作ってみましょう。<code>greeting.go</code>を作り、次のようなに<code>Do</code>関数を作成します。</p>
+<pre><code>package greeting
+
+import (
+        &#34;fmt&#34;
+        &#34;time&#34;
+)
+
+func Do() {
+        h := time.Now().Hour()
+        switch {
+        case h &gt;= 4 &amp;&amp; h &lt;= 9:
+                fmt.Println(&#34;おはよう&#34;)
+        case h &gt;= 10 &amp;&amp; h &lt;= 16:
+                fmt.Println(&#34;こんにちは&#34;)
+        default:
+                fmt.Println(&#34;こんばんは&#34;)
+        }
+}</code></pre>
+<p><code>Do</code>関数の関数名が大文字で始まる理由は、Goではパッケージ外に関数や型、変数などを公開する場合には大文字で名前を始めるというルールがあるからです。</p>
+<h2><code>GOPATH</code></h2>
+<p>作成したユーザ定義パッケージはどのディレクトリに置くべきでしょうか。外部パッケージをインポートするには、<code>import</code>文を書きます。Goのコンパイラは、<code>import</code>文で書いたインポートパス（<code>&#34;fmt&#34;</code>や<code>&#34;time&#34;</code>など）から外部パッケージのソースコードを見つける必要があります。そのため、標準パッケージ以外のパッケージは、<code>GOPATH</code>という特別なディレクトリ以下にソースコードが格納されている必要があります。</p>
+<aside class="special"><p><strong>モジュール</strong></p>
+<p>Go1.11から試験的に<a href="https://golang.org/cmd/go/#hdr-Modules_and_vendoring" target="_blank">モジュール</a>という機能が導入されました。モジュールを使う場合、<code>go.mod</code>というファイルに書かれた依存関係を基にビルドするため、<code>GOPATH</code>以下に依存ライブラリを置く必要がなくなりました。</p>
+</aside>
+<p><code>GOPATH</code>は複数設定でき、マシン全体の<code>GOPATH</code>を1つ設定するほか、プロジェクトごとに<code>GOPATH</code>を追加で設定する場合もあります。ここでは、<code>3_package/gopath</code>に<code>GOPATH</code>を設定してみましょう。</p>
+<p><code>3_pacakge/gopath</code>以下のディレクトリ構造を<code>tree</code>コマンドで確認してみます。なお、<code>tree</code>コマンドはデフォルトではインストールされてない可能性があります。</p>
+<pre>$ tree gopath
+gopath
+└── src
+    ├── cli
+    │   └── greeting
+    │       └── main.go
+    └── greeting
+        └── greeting.go</pre>
+<p><code>GOPATH</code>直下には<code>src</code>ディレクトリがあり、その下に<code>cli</code>と<code>greeting</code>というディレクトリがあります。前述した<code>greeting.go</code>は<code>greeting</code>ディレクトリ以下に置いてあります。</p>
+<p><code>cli/greeting</code>ディレクトリ以下には次のような実行可能なバイナリを生成するための<code>main</code>関数を持った<code>main.go</code>が置いてあります。</p>
+<pre><code>package main
+
+import &#34;greeting&#34;
+
+func main() {
+        greeting.Do()
+}</code></pre>
+<p><code>main.go</code>では、<code>greeting</code>パッケージを使うために<code>import &#34;greeting&#34;</code>という文を書いています。Goのコンパイラは、この<code>import</code>文に書かれたインポートパスと<code>GOPATH</code>を基にして、<code>gopath/src/greeting</code>以下に<code>greeting</code>パッケージのソースコードがあることを知ります。つまり、<code>src</code>ディレクトリ以下に置いたディレクトリ構造とインポートパスは一致している必要があるということです。</p>
+<p>それでは、<code>GOPATH</code>を設定して<code>cli/greeting/main.go</code>をビルドしてみましょう。<code>go run</code>で実行したり、<code>go build</code>で<code>main.go</code>をビルドしても問題ありませんが、ここでは<code>go install</code>を使ってみましょう。<code>go install</code>は指定したパスの<code>main</code>パッケージをビルドし、<code>GOPATH</code>以下の<code>bin</code>ディレクトリに配置してくれるコマンドです。</p>
+<p>次のように、まず<code>export</code>コマンドで<code>GOPATH</code>を<code>3_package/gopath</code>に設定しています。なお、<code>pwd</code>コマンドは現在のディレクトリの絶対パスを取得するコマンドです。<code>go install cli/greeting</code>で<code>src/cli/greeting</code>ディレクトリ以下のコードをビルドし、<code>bin</code>ディレクトリ以下に配置しています。<code>bin</code>ディレクトリ以下に生成された<code>greeting</code>という名前のバイナリを実行してみると、うまくビルドされていることが確認できます。</p>
+<pre>$ cd 3_package/gopath
+$ export GOPATH=`pwd`
+$ go install cli/greeting
+$ ./bin/greeting
+こんにちは</pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="テストを書いてみよう" duration="10">
+        <h2>テストしやすいコードにしよう</h2>
+<p>それでは次に<code>greeting</code>パッケージのテストを書いてみましょう。しかし、ここまでの<code>greeting</code>パッケージの実装では、うまくテストができません。例えば、&#34;こんばんは&#34;がうまく表示されるかテストしたい場合には、内部で<code>time.Now</code>関数を使っているため、夜にならないと確認することができません。</p>
+<p>そこで現在時刻を取得する部分をテスト用にモックに差し替えるようにしましょう。まずは<code>time.Now</code>関数を抽象化した<code>Clock</code>インタフェースを次のように定義しましょう。</p>
+<pre><code>type Clock interface {
+        Now() time.Time
+}
+
+type ClockFunc func() time.Time
+
+func (f ClockFunc) Now() time.Time {
+        return f()
+}</code></pre>
+<p><code>Clock</code>インタフェースは<code>Now</code>メソッドを規定しており、シグニチャは<code>time.Now</code>関数と一致しています。また、ここでは<code>Clock</code>インタフェースの実装を簡単にするために、<code>ClockFunc</code>型も提供しています。<code>ClockFunc</code>型は<code>Clock</code>インタフェースを実装している型で関数です。<code>time.Time</code>型の値を返す関数を<code>ClockFunc</code>型にキャストするだけで、新しい型を作ることなく<code>Clock</code>インタフェースを実装していることにできます。</p>
+<p>次に<code>Clock</code>インタフェースをフィールドとして持つ<code>Greeting</code>構造体型を作りましょう。<code>Greeting</code>型は次のような定義になっています。また、現在時刻を取得する<code>now</code>メソッドも定義しています。<code>now</code>メソッドは、<code>Clock</code>フィールドが<code>nil</code>の場合は<code>time.Now</code>関数を使って現在時刻を取得しています。一方、<code>nil</code>ではない場合は<code>Clock</code>フィールドの<code>Now</code>メソッドを呼び出すことで現在時刻を取得しています。そのため、<code>Clock</code>フィールドを入れ替えるだけで<code>time.Now</code>関数とは別の挙動をさせることができるようになり、常に同じ時間を返すようなモックを差し込むことでテストを行うことが容易になります。</p>
+<pre><code>type Greeting struct {
+        Clock Clock
+}
+
+func (g *Greeting) now() time.Time {
+        if g.Clock == nil {
+                return time.Now()
+        }
+        return g.Clock.Now()
+}</code></pre>
+<p>現在時刻の問題はモックを差し込めるようにインタフェースにすることで解決しました。しかし、現在の実装ではあいさつ文が標準出力に書き出されるためテストする際に取得することが困難です。そこで書き込み先を自由に変えられるようにしましょう。例えば、次のように<code>Do</code>メソッドを定義し、引数で受け取った<code>io.Writer</code>に書き込むようにすれば良さそうです。</p>
+<pre><code>func (g *Greeting) Do(w io.Writer) error {
+        h := g.now().Hour()
+        var msg string
+        switch {
+        case h &gt;= 4 &amp;&amp; h &lt;= 9:
+                msg = &#34;おはよう&#34;
+        case h &gt;= 10 &amp;&amp; h &lt;= 16:
+                msg = &#34;こんにちは&#34;
+        default:
+                msg = &#34;こんばんは&#34;
+        }
+
+        _, err := fmt.Fprint(w, msg)
+        if err != nil {
+                return err
+        }
+
+        return nil
+}</code></pre>
+<p><code>Do</code>メソッドは<code>now</code>メソッドで取得した時刻を基に、あいさつ文を設定し、引数で受け取った<code>io.Write</code>に<code>fmt.Fprintf</code>関数で書き込んでいます。</p>
+<h2>テストを書こう</h2>
+<p>さて、テストを書く準備ができたので、実際にテストを書いていきましょう。テストコードを書くために、<code>Greeting</code>型を定義した<code>greeting.go</code>と同じディレクトリに<code>greeting_test.go</code>というファイルを作りましょう。</p>
+<p><code>4_mock</code>ディレクトリ以下の構成は次のようになっています。</p>
+<pre>$ tree 4_mock
+4_mock
+└── gopath
+    └── src
+        ├── cli
+        │   └── greeting
+        │       └── main.go
+        └── greeting
+            ├── greeting.go
+            └── greeting_test.go</pre>
+<p>Goでは<code>_test.go</code>のプリフィックスをつけたファイルをテストコードだと解釈します。そして、<code>go test</code>コマンドでそれらのテストコードを実行することが可能です。</p>
+<p>テストコードのパッケージは、テスト対象のパッケージと同じパッケージにすることもできますが、<code>greeting_test</code>のように<code>_test</code>サフィックスつけることもできます。<code>_test</code>サフィックスをつけることでテスト対象のパッケージとは別のパッケージにすることができ、テスト対象のコードとテストコードを疎結合にすることができます。</p>
+<p>テストコードはいくつかのテスト関数から成ります。<code>go test</code>は<code>Test</code>という関数名にプリフィックスがついた関数で引数が<code>*testing.T</code>型を取るものをテスト関数だと解釈します。たとえば、<code>greeting_test.go</code>を見てみると次のような定義になっています。</p>
+<pre>package greeting_test
+
+import (
+        &#34;bytes&#34;
+        &#34;testing&#34;
+        &#34;time&#34;
+
+        &#34;greeting&#34;
+)
+
+func TestGreeting_Do(t *testing.T) {
+        g := greeting.Greeting{
+                Clock: greeting.ClockFunc(func() time.Time {
+                        // 2018/08/31 06:00:00
+                        return time.Date(2018, 8, 31, 06, 0, 0, 0, time.Local)
+                }),
+        }
+
+        var buf bytes.Buffer
+        if err := g.Do(&amp;buf); err != nil {
+                t.Error(&#34;unexpected error:&#34;, err)
+        }
+
+        if expected, actual := &#34;おはよう&#34;, buf.String(); expected != actual {
+                t.Errorf(&#34;greeting message wont %s but got %s&#34;, expected, actual)
+        }
+}</pre>
+<p><code>greeting_test.go</code>には<code>TestGreeting_Do</code>関数というテスト関数が1つだけ定義されています。<code>TestGreeting_Do</code>関数は<code>*greeting.Greeting</code>型の<code>Do</code>メソッドをテストするテスト関数です。</p>
+<p><code>greeting.Greeting</code>構造体の<code>Clock</code>フィールドに<code>greeting.ClockFunc</code>にキャストした、常に2018年08月31日の06時00分の時刻を返す関数を設定しています。そのため、いつ<code>Do</code>メソッドを呼び出しても朝6時のあいさつ文が<code>Do</code>メソッドに渡した<code>io.Writer</code>に書き込まれます。</p>
+<p><code>Do</code>メソッドには、引数として<code>*bytes.Buffer</code>型の値を渡しています。<code>*bytes.Buffer</code>型は<code>io.Writer</code>と<code>io.Reader</code>を実装した型です。そのため、<code>io.Writer</code>として書き込んだ値をStringメソッドなどで取得することが可能です。</p>
+<p>このテスト関数では、<code>Do</code>メソッドを呼び出した結果が&#34;おはよう&#34;であるかチェックし、&#34;おはよう&#34;でなければ、<code>t.Errorf</code>メソッドでテストを落としています。</p>
+<p>それでは、テストを実行してみましょう。<code>GOPATH</code>を<code>4_mock</code>以下に通し、<code>go test</code>を実行することでテストを行うことができます。</p>
+<pre>$ cd 4_mock/gopath
+$ export GOPATH=`pwd`
+$ go test -v greeting
+=== RUN   TestGreeting_Do
+--- PASS: TestGreeting_Do (0.00s)
+PASS
+ok      greeting </pre>
+<p><code>go test</code>にはテストを行いたいパッケージ名を指定しています。また、<code>-v</code>オプションを指定することで、テストの詳細を表示しています。<code>go test</code>の結果から、うまく<code>TestGreeting_Do</code>関数が実行され、テストが成功していることが分かります。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="ヘルパー関数を作ろう" duration="5">
+        <p>ここまでのテストでは、朝6時の場合の1つのケースしかテストを行っていませんでした。テストを網羅的に行うためには、もっとテストケースを増やす必要があります。しかし、その前にヘルパー関数を作って、<code>greeting.Greeting</code>構造体の<code>Clock</code>フィールドを設定しやすくしましょう。</p>
+<p>作成するヘルパー関数は、<code>greeting.Clock</code>インタフェースを実装した値を返します。引数に文字列で<code>&#34;2018/08/31 06:00:00&#34;</code>のように渡すと、その文字列を<code>time.Time</code>型としてパースします。そして、ヘルパー関数の戻り値として返された値の<code>Now</code>メソッドを呼び出すとパースされた<code>time.Time</code>型の値が返されます。</p>
+<p>さっそく実装を見てみましょう。<code>5_helper/gopath/src/greeting/greeting_test.go</code>の<code>mockClock</code>関数がヘルパー関数になります。</p>
+<pre><code>func mockClock(t *testing.T, v string) greeting.Clock {
+        t.Helper()
+        now, err := time.Parse(&#34;2006/01/02 15:04:05&#34;, v)
+        if err != nil {
+                t.Fatal(&#34;unexpected error:&#34;, err)
+        }
+
+        return greeting.ClockFunc(func() time.Time {
+                return now
+        })
+}</code></pre>
+<p><code>mockClock</code>関数は2つの引数を受け取ります。第1引数は<code>*testing.T</code>型の値です。第2引数は<code>time.Time</code>型の値としてパースするための文字列です。</p>
+<p>ここで第1引数に<code>*testint.T</code>型の値を取る理由は2つあります。</p>
+<p>1つめは、<code>Helper</code>メソッドを呼ぶためです。<code>Helper</code>メソッドを呼ぶことで<code>t.Error</code>などでテストを落とした際に表示されるテストが落ちた位置がヘルパー関数内ではなく、呼び出し元の位置になります。ヘルパー関数は複数のテスト関数から呼び出されることが予想されます。そのため、テストが落ちた位置がヘルパー関数内だと、あまり情報として有益なものではないからです。</p>
+<p>2つめは、ヘルパー関数内でエラーが発生した場合にテストを落とすためです。ヘルパー関数内で発生するエラーは予期しないものが多く、本来のテスト対象のコードとは関係のないエラーが多いからです。たとえば、<code>mockClock</code>関数の例だと、渡された文字列を<code>time.Time</code>型にパースする際に失敗するとエラーが発生します。ここでエラーが発生するとテストを続けることが不可能であるため、<code>t.Fatal</code>でテストを落としています。</p>
+<aside class="special"><p><strong><code>t.Error</code></strong><strong>メソッドと</strong><strong><code>t.Fatal</code></strong><strong>メソッド</strong></p>
+<p><code>t.Error</code>メソッドはテストを失敗させますが、テスト関数を止めることなく最後まで実行してからテストを失敗させます。一方で<code>t.Fatal</code>メソッドはテストを失敗させてかつテスト関数を直ちに終了させます。なお、<code>t.Errorf</code>メソッドや<code>t.Fatalf</code>メソッドなどの書式を指定してエラーメッセージを生成するメソッドもあります。</p>
+</aside>
+<p>さて、<code>mockClock</code>関数を使ってテストコードを書いていきましょう。<code>greeting_test.go</code>を見てみると、テスト関数で次のように<code>mockClock</code>関数を使っています。</p>
+<pre><code>func TestGreeting_Do(t *testing.T) {
+        g := greeting.Greeting{
+                Clock: mockClock(t, &#34;2018/08/31 06:00:00&#34;),
+        }
+
+        var buf bytes.Buffer
+        if err := g.Do(&amp;buf); err != nil {
+                t.Error(&#34;unexpected error:&#34;, err)
+        }
+
+        if expected, actual := &#34;おはよう&#34;, buf.String(); expected != actual {
+                t.Errorf(&#34;greeting message wont %s but got %s&#34;, expected, actual)
+        }
+}</code></pre>
+<p><code>greeting.Greeting</code>構造体の<code>Clock</code>フィールドを設定する際に、<code>mockClock</code>関数を呼び出すことで簡単に設定できていることが分かります。</p>
+<p>それではテストを実行してみましょう。特に実行結果は変わりませんが、うまくテストができていることが分かります。</p>
+<pre>$ cd 5_helper/gopath
+$ export GOPATH=`pwd`
+$ go test -v greeting
+=== RUN   TestGreeting_Do
+--- PASS: TestGreeting_Do (0.00s)
+PASS
+ok      greeting </pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="テストケースをテーブルで書こう" duration="10">
+        <h2>テストケースを考えよう</h2>
+<p>ヘルパー関数を作りテストケースが作りやすくなったので、さっそくテストケースを増やしていきましょう。まずは1つのテストケースで何をテストするか決めましょう。ここでは次の3つの項目をチェックしたいと思います。</p>
+<ul>
+<li>指定した時刻にあったあいさつ文が<code>io.Writer</code>に書き込まれるか</li>
+<li>予期しないエラーが発生しないか</li>
+<li>期待したエラーが発生するか</li>
+</ul>
+<p>これらをチェックするために、1つのテストケースを次の構造体で定義します。</p>
+<pre><code>struct {
+        writer io.Writer
+        clock  greeting.Clock
+
+        msg       string
+        expectErr bool
+}</code></pre>
+<p><code>writer</code>フィールドは、<code>*greeting.Greeting</code>型の<code>Do</code>メソッドに渡すための<code>io.Writer</code>です。実際には<code>*bytes.Buffer</code>型の値を渡すことで書き込んだ内容をチェックすることができます。</p>
+<p><code>clock</code>フィールドは、<code>greeting.Greeting</code>構造体の<code>Clock</code>フィールドに設定される値です。<code>mockClock</code>関数で生成した値を設定します。</p>
+<p><code>msg</code>フィールドは、<code>writer</code>フィールドに書き込まれるあいさつ文の期待する値です。この値が書き込まれていない場合はテストを落とします。</p>
+<p><code>expectErr</code>フィールドは、<code>*greeting.Greeting</code>型の<code>Do</code>メソッドの第2戻り値がエラーを返すことを期待するかどうかを表す値です。予期するエラーを返す場合にはtrueが設定されます。<code>expectErr</code>フィールドの値が<code>false</code>の場合に<code>Do</code>メソッドがエラーを返した場合にはテストを落とします。一方、<code>true</code>の場合に<code>Do</code>メソッドがエラーを返さない場合もテストを落とします。</p>
+<h2>テーブル駆動テストをやってみよう</h2>
+<p>Goでは<a href="https://github.com/golang/go/wiki/TableDrivenTests" target="_blank">テーブル駆動テスト</a>と呼ばれるテスト手法があります。テストケースをテーブル状に定義しておき、それを順次テストすることで網羅的にテストを行うものです。</p>
+<p>ここでは、前述したテストケースを表す構造体を次のようなマップにして並べてましょう。</p>
+<pre><code>cases := map[string]struct {
+        writer io.Writer
+        clock  greeting.Clock
+
+        msg       string
+        expectErr bool
+} {
+        // テストケース        
+}</code></pre>
+<p>このマップを次のように<code>for</code>で回すことで各テストケースを実行します。</p>
+<pre><code>for n, tc := range cases {
+        tc := tc
+        t.Run(n, func(t *testing.T) {
+                g := greeting.Greeting{
+                        Clock: tc.clock,
+                }
+
+                switch err := g.Do(tc.writer); true {
+                // エラーを期待してるのにエラーが発生していない
+                case err == nil &amp;&amp; tc.expectErr:
+                        t.Error(&#34;expected error did not occur&#34;)
+                // エラーは期待してないのにエラーが発生した
+                case err != nil &amp;&amp; !tc.expectErr:
+                        t.Error(&#34;unexpected error:&#34;, err)
+                }
+
+                // tc.writerが*bytes.Bufferだったら値もチェック
+                if buff, ok := tc.writer.(*bytes.Buffer); ok {
+                        msg := buff.String()
+                        if msg != tc.msg {
+                                t.Errorf(&#34;greeting msg wont %s but got %s&#34;, tc.msg, msg)
+                        }
+                }
+        })
+}</code></pre>
+<p>各テストケースは、<code>t.Run</code>メソッド用いてサブテストとして実行されます。サブテストとして、実行することで各テストケースに名前をつけることができます。<code>t.Run</code>メソッドの引数は、第1引数がテストケース名、第2引数がテストケースを実行するための関数です。</p>
+<p>サブテストとして各テストケースを実行する利点は、<code>go test</code>コマンドの-runオプションで実行するサブテストを指定することができるためです。例えば、<code>go test -run TestHoge/A</code>と実行すると、<code>TestHoge</code>関数のサブテストの<code>A</code>だけが実行されます。個別に実行することができると、テストケースが増えた際に無駄に実行を待つ必要がなくなります。</p>
+<p>なお、<code>t.Run</code>メソッドを呼び出す前に<code>tc := tc</code>と代入しなおしている理由は、変数tcのスコープを<code>for</code>全体ではなく、各繰り返しにするためです。こうしておくことで、テストケースが並列に実行されてしまった場合でも、<code>t.Run</code>メソッドに渡した関数の中で変数<code>tc</code>を参照しても期待した挙動になるからです。もし、上書きしてない場合には、テストケースが並列に実行される場合には、一度<code>for</code>がすべて終わったあとにテストケースが実行されるため、どの回でも変数<code>tc</code>が最後のテストケースになってしまうからです。</p>
+<aside class="special"><p><strong>テストを並列に実行するためには</strong></p>
+<p><code>t.Paralell</code>メソッドを用いるとテスト関数を並列で実行することができます。並列でテストを動かした場合は、各テスト関数で同じパッケージ変数を参照していたり、上書きしていた場合にデータ競合が発生する可能性があります。テスト関数を並列に走らせたい場合は、テスト対象のパッケージでパッケージ変数をあまり使わないようにしなければいけません。なお、データ競合をテスト時に検出するためには、<code>go test</code>のオプションに<code>-race</code>を指定する必要があります。</p>
+</aside>
+<p>それでは、実際にテストケースを並べていきましょう。時間によってあいさつ文が異なるため、境界となる時刻でテストケースを作ります。作成したテストケースは次のようになります。</p>
+<pre><code>cases := map[string]struct {
+        writer io.Writer
+        clock  greeting.Clock
+
+        msg       string
+        expectErr bool
+}{
+        &#34;04時&#34;: {
+                writer: new(bytes.Buffer),
+                clock:  mockClock(t, &#34;2018/08/31 04:00:00&#34;),
+                msg:    &#34;おはよう&#34;,
+        },
+        &#34;09時&#34;: {
+                writer: new(bytes.Buffer),
+                clock:  mockClock(t, &#34;2018/08/31 09:00:00&#34;),
+                msg:    &#34;おはよう&#34;,
+        },
+        &#34;10時&#34;: {
+                writer: new(bytes.Buffer),
+                clock:  mockClock(t, &#34;2018/08/31 10:00:00&#34;),
+                msg:    &#34;こんにちは&#34;,
+        },
+        &#34;16時&#34;: {
+                writer: new(bytes.Buffer),
+                clock:  mockClock(t, &#34;2018/08/31 16:00:00&#34;),
+                msg:    &#34;こんにちは&#34;,
+        },
+        &#34;17時&#34;: {
+                writer: new(bytes.Buffer),
+                clock:  mockClock(t, &#34;2018/08/31 17:00:00&#34;),
+                msg:    &#34;こんばんは&#34;,
+        },
+        &#34;03時&#34;: {
+                writer: new(bytes.Buffer),
+                clock:  mockClock(t, &#34;2018/08/31 03:00:00&#34;),
+                msg:    &#34;こんばんは&#34;,
+        },
+}</code></pre>
+<p>&#34;おはよう&#34;、&#34;こんにちは&#34;、&#34;こんばんは&#34;の3つのあいさつ文に対して、それぞれ始まりの時刻と終わりの時刻をテストしていることが分かります。</p>
+<p>さて、これでテストケースをある程度網羅できました。しかし、まだ<code>*greeting.Greeting</code>型の<code>Do</code>メソッドで期待したエラーが発生した場合のテストケースがありません。<code>Do</code>メソッドでエラーが発生する可能性があるのは、<code>io.Writer</code>に書き込む時です。そこで、わざとエラーを発生させるために、<code>Write</code>メソッドを呼び出すたびにエラーが発生するような型を作ってみましょう。</p>
+<pre><code>type errorWriter struct {
+        Err error
+}
+
+func (w *errorWriter) Write(p []byte) (n int, err error) {
+        return 0, w.Err
+}</code></pre>
+<p>errorWriter型は構造体でErrフィールドを持ちます。*errorWriter型のWriteメソッドは、io.Writerで規定しているWriteメソッドを実装するものです。このメソッドの実装をみると、呼び出すたびにErrフィールドで設定したエラーを返していることが分かります。</p>
+<p>さて、この<code>errorWriter</code>型を用いて予期するエラーが正しく発生するかテストするケースを追加しましょう。</p>
+<pre><code>cases := map[string]struct {
+        writer io.Writer
+        clock  greeting.Clock
+
+        msg       string
+        expectErr bool
+}{
+        // 略
+        &#34;エラー&#34;: {
+                writer:    &amp;errorWriter{Err: errors.New(&#34;error&#34;)},
+                expectErr: true,
+        },
+}</code></pre>
+<p>&#34;エラー&#34;というテストケースを追加し、writerフィールドに*errorWriter型の値を設定し、expectErrにはtrueを設定しています。こうすることで、予期しているエラーがちゃんとDoメソッドから返ってくるかチェックすることができます。</p>
+<p>最後にGOPATHを設定して、go testコマンドでテストを実行してみましょう。</p>
+<pre>$ cd 6_tabletest/gopath
+$ export GOPATH=`pwd`
+$ go test -v greeting
+=== RUN   TestGreeting_Do
+=== RUN   TestGreeting_Do/04時
+=== RUN   TestGreeting_Do/09時
+=== RUN   TestGreeting_Do/10時
+=== RUN   TestGreeting_Do/16時
+=== RUN   TestGreeting_Do/17時
+=== RUN   TestGreeting_Do/03時
+=== RUN   TestGreeting_Do/エラー
+--- PASS: TestGreeting_Do (0.00s)
+    --- PASS: TestGreeting_Do/04時 (0.00s)
+    --- PASS: TestGreeting_Do/09時 (0.00s)
+    --- PASS: TestGreeting_Do/10時 (0.00s)
+    --- PASS: TestGreeting_Do/16時 (0.00s)
+    --- PASS: TestGreeting_Do/17時 (0.00s)
+    --- PASS: TestGreeting_Do/03時 (0.00s)
+    --- PASS: TestGreeting_Do/エラー (0.00s)
+PASS
+ok      greeting        0.011s</pre>
+<p><code>-v</code>オプションをつけると、各テストケースがサブテストとしてうまく実行できていることが分かります。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="おわりに" duration="1">
+        <p>このコードラボでは、テテストの基本的な書き方からテストしやすいコードの書き方、ヘルパー関数、テーブル駆動テストなどを一通り学びました。ここで学んだ内容は基礎的な内容なので、ぜひ<code>testing</code>パッケージのAPIドキュメントなど読んだりして応用的なことにチャレンジしてみてください。</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-49880327-14', 'auto');
+
+    (function() {
+      var gaCodelab = '';
+      if (gaCodelab) {
+        ga('create', gaCodelab, 'auto', {name: 'codelab'});
+      }
+
+      var gaView;
+      var parts = location.search.substring(1).split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var param = parts[i].split('=');
+        if (param[0] === 'viewga') {
+          gaView = param[1];
+          break;
+        }
+      }
+      if (gaView && gaView !== gaCodelab) {
+        ga('create', gaView, 'auto', {name: 'view'});
+      }
+    })();
+  </script>
+
+</body>
+</html>
