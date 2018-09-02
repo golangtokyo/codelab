@@ -26,6 +26,10 @@
             inst = result.instance;
             // 実行ボタンを有効にする
             document.getElementById("runButton").disabled = false;
+        ).catch((err) => {
+          // コンソールにerrorが出力される場合はcloud shellなどで試してください
+          console.error('catch');
+          console.error(err);
         });
 
         // 実行ボタンを押されたときの処理
