@@ -234,7 +234,7 @@ func (g *Greeting) now() time.Time {
 <p>Goでは<code>_test.go</code>のプリフィックスをつけたファイルをテストコードだと解釈します。そして、<code>go test</code>コマンドでそれらのテストコードを実行することが可能です。</p>
 <p>テストコードのパッケージは、テスト対象のパッケージと同じパッケージにすることもできますが、<code>greeting_test</code>のように<code>_test</code>サフィックスつけることもできます。<code>_test</code>サフィックスをつけることでテスト対象のパッケージとは別のパッケージにすることができ、テスト対象のコードとテストコードを疎結合にすることができます。</p>
 <p>テストコードはいくつかのテスト関数から成ります。<code>go test</code>は<code>Test</code>という関数名にプリフィックスがついた関数で引数が<code>*testing.T</code>型を取るものをテスト関数だと解釈します。たとえば、<code>greeting_test.go</code>を見てみると次のような定義になっています。</p>
-<pre>package greeting_test
+<pre><code>package greeting_test
 
 import (
         &#34;bytes&#34;
@@ -260,7 +260,7 @@ func TestGreeting_Do(t *testing.T) {
         if expected, actual := &#34;おはよう&#34;, buf.String(); expected != actual {
                 t.Errorf(&#34;greeting message wont %s but got %s&#34;, expected, actual)
         }
-}</pre>
+}</code></pre>
 <p><code>greeting_test.go</code>には<code>TestGreeting_Do</code>関数というテスト関数が1つだけ定義されています。<code>TestGreeting_Do</code>関数は<code>*greeting.Greeting</code>型の<code>Do</code>メソッドをテストするテスト関数です。</p>
 <p><code>greeting.Greeting</code>構造体の<code>Clock</code>フィールドに<code>greeting.ClockFunc</code>にキャストした、常に2018年08月31日の06時00分の時刻を返す関数を設定しています。そのため、いつ<code>Do</code>メソッドを呼び出しても朝6時のあいさつ文が<code>Do</code>メソッドに渡した<code>io.Writer</code>に書き込まれます。</p>
 <p><code>Do</code>メソッドには、引数として<code>*bytes.Buffer</code>型の値を渡しています。<code>*bytes.Buffer</code>型は<code>io.Writer</code>と<code>io.Reader</code>を実装した型です。そのため、<code>io.Writer</code>として書き込んだ値をStringメソッドなどで取得することが可能です。</p>
