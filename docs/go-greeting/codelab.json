@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "source": "1TwbojRvp4r28KceQQHTlSdN4lsRzL9bqB0diS2Xm39I",
+  "format": "html",
+  "prefix": "/codelab/",
+  "mainga": "UA-49880327-14",
+  "updated": "2018-09-02T02:16:31Z",
+  "id": "go-greeting",
+  "duration": 40,
+  "title": "Goでテストを書いてみよう",
+  "author": "tenntenn",
+  "summary": "このコードラボでは、時間によってあいさつメッセージを返す簡単なライブラリを作ります。そして、そのライブラリのテスト書いていくことで、テストのやりかたやテストしやすいGoのコードについて学ぶことができます。",
+  "theme": "go",
+  "status": [
+    "draft"
+  ],
+  "category": [
+    "Go"
+  ],
+  "tags": [
+    "devfest18jp"
+  ],
+  "feedback": "https://github.com/golangtokyo/codelab/issues",
+  "url": "go-greeting"
+}

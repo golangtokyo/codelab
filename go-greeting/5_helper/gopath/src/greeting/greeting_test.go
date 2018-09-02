@@ -8,6 +8,18 @@ import (
 	"greeting"
 )
 
+func mockClock(t *testing.T, v string) greeting.Clock {
+	t.Helper()
+	now, err := time.Parse("2006/01/02 15:04:05", v)
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	return greeting.ClockFunc(func() time.Time {
+		return now
+	})
+}
+
 func TestGreeting_Do(t *testing.T) {
 	g := greeting.Greeting{
 		Clock: mockClock(t, "2018/08/31 06:00:00"),
@@ -21,16 +33,4 @@ func TestGreeting_Do(t *testing.T) {
 	if expected, actual := "おはよう", buf.String(); expected != actual {
 		t.Errorf("greeting message wont %s but got %s", expected, actual)
 	}
-}
-
-func mockClock(t *testing.T, v string) greeting.Clock {
-	t.Helper()
-	now, err := time.Parse("2006/01/02 15:04:05", v)
-	if err != nil {
-		t.Fatal("unexpected error:", err)
-	}
-
-	return greeting.ClockFunc(func() time.Time {
-		return now
-	})
 }
