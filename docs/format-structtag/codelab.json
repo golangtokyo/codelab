@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "source": "1F2RLyo66xXkEfLhHCzSdBoI_Yn9pqRGFxjMmDBCVgjM",
+  "format": "html",
+  "prefix": "/codelab/",
+  "mainga": "UA-49880327-14",
+  "updated": "2019-03-05T12:13:52Z",
+  "id": "format-structtag",
+  "duration": 20,
+  "title": "構造体のタグを整形しよう！",
+  "author": "daisuzu",
+  "summary": "本コードラボでは、Goのソースコードを静的解析し、構造体のタグを整形して書き換える方法について学びます。",
+  "theme": "go",
+  "status": [
+    "draft"
+  ],
+  "category": [
+    "Go"
+  ],
+  "tags": [
+    "web"
+  ],
+  "feedback": "https://github.com/golangtokyo/codelab/issues",
+  "url": "format-structtag"
+}
