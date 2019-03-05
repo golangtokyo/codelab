@@ -6,6 +6,7 @@ codelabs=(
     "find-gophers"         "1fbpwn8iOLZAO5AYkcbdIDHAM6Dtn1lUwnsUSyNwScP4"
     "go-webassembly"       "12IXvrTgNIMUXotVcGkpqfu3WFhvtvfnzlvQfJIn0h6k"
     "go-greeting"          "1TwbojRvp4r28KceQQHTlSdN4lsRzL9bqB0diS2Xm39I"
+    "format-structtag"     "1F2RLyo66xXkEfLhHCzSdBoI_Yn9pqRGFxjMmDBCVgjM"
 )
 
 for ((i = 0; i < ${#codelabs[@]}; i+=2)) {
