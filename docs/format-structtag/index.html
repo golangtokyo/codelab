@@ -68,23 +68,25 @@ type Resource struct {
 <pre><code>fset := token.NewFileSet()
 file, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
 if err != nil {
-        panic(err)
+        log.Fatal(&#34;Error:&#34;, err)
 }</code></pre>
-<p><a href="https://play.golang.org/p/ueJ1NG34_nb" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/cGQMtVuP2Py" target="_blank">Go Playground</a>でコードを見る。</p>
 <h2><strong>ディレクトリから取得する</strong></h2>
 <p>ディレクトリから取得するには、配下にあるファイルごとに <code>ParseFile</code> を呼んでいっても構いませんが、同じく <code>go/parser</code> パッケージにある<a href="https://golang.org/pkg/go/parser/#ParseDir" target="_blank">ParseDir</a>関数を使用するのが簡単です。こちらは <code>&#34;.go&#34;</code> で終わるファイルのみが対象になり、第三引数の <code>filter</code> で追加のフィルタ条件を指定することもできます。</p>
 <pre><code>fset := token.NewFileSet()
 files, err := parser.ParseDir(fset, path, nil, parser.ParseComments)
 if err != nil {
-        panic(err)
+        log.Fatal(&#34;Error:&#34;, err)
 }</code></pre>
 <h2><strong>パッケージから取得する取得する</strong></h2>
 <p>パッケージから取得する場合、ファイルやディレクトリのような関数が用意されていないため、まずはパッケージ名から対象のファイルやディレクトリを取得する必要があります。</p>
 <p>パッケージ名からパッケージの情報を取得するには <code>go/build</code> パッケージを使用します。 <code>GOOS</code> や <code>GOARCH</code> などが実行環境のもので良ければ<a href="https://golang.org/pkg/go/build/#Context.Import" target="_blank">Default.Import</a>、変更する必要がある場合は<a href="https://golang.org/pkg/go/build/#Context" target="_blank">Context</a>を作成した上で<a href="https://golang.org/pkg/go/build/#Context.Import" target="_blank">Import</a>メソッドを呼ぶと<a href="https://golang.org/pkg/go/build/#Package" target="_blank">*Package</a>が取得できます。</p>
+<aside class="special"><p><strong>注</strong>: Go1.12以降の場合、より静的解析に向けて作られた<a href="https://godoc.org/golang.org/x/tools/go/packages" target="_blank">golang.org/x/tools/go/packages</a>パッケージを使用してパッケージの情報を取得することもできます。</p>
+</aside>
 <p>通常のソースは <code>Package.GoFiles</code> に格納されていますが、CGO用のソースやテスト用のファイルはそれぞれ <code>CgoFiles</code> 、 <code>TestGoFiles</code> と異なるフィールドに格納されているので必要に応じて組み合わせて使ってください。また、ディレクトリは <code>Package.Dir</code> です。</p>
 <pre><code>p, err := build.Default.Import(name, &#34;&#34;, 0)
 if err != nil {
-        panic(err)
+        log.Fatal(&#34;Error:&#34;, err)
 }
 
 var files []string
@@ -95,7 +97,7 @@ files = append(files, p.TestGoFiles...)</code></pre>
 <h2><strong>抽象構文木を出力する</strong></h2>
 <p>それでは取得した抽象構文木を出力してみましょう。抽象構文木は <code>go/ast</code> パッケージの<a href="https://golang.org/pkg/go/ast/#Print" target="_blank">Print</a>関数で出力できます。</p>
 <pre><code>ast.Print(fset, file)</code></pre>
-<p><a href="https://play.golang.org/p/7v4jTa37vxY" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/KfB05Ju4vsj" target="_blank">Go Playground</a>でコードを見る。</p>
 <p>実行すると次のようになります。</p>
 <pre><code>     0  *ast.File {
      1  .  Package: a.go:1:1
@@ -205,7 +207,7 @@ files = append(files, p.TestGoFiles...)</code></pre>
         ast.Print(fset, node)
         return false
 })</code></pre>
-<p><a href="https://play.golang.org/p/0DL2H1sYmKL" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/lLRyX1SPl-A" target="_blank">Go Playground</a>でコードを見る。</p>
 <p>今回は構造体の定義からタグを取得したいので <code>node</code> が <code>*ast.StructType</code> のものを探索していきます。<a href="https://golang.org/pkg/go/ast/#Node" target="_blank">ast.Node</a>は <code>interface</code> なので型アサーションで実際の型をチェックしていきます。</p>
 <pre><code>ast.Inspect(file, func(node ast.Node) bool {
         s, ok := node.(*ast.StructType)
@@ -217,7 +219,7 @@ files = append(files, p.TestGoFiles...)</code></pre>
 
         return true
 })</code></pre>
-<p><a href="https://play.golang.org/p/4etzGX_CPmq" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/8iag3W4lAld" target="_blank">Go Playground</a>でコードを見る。</p>
 <p>これで構造体の抽象構文木のみが出力されるようになりました。</p>
 <pre><code>     0  *ast.StructType {
      1  .  Struct: a.go:3:15
@@ -292,7 +294,7 @@ files = append(files, p.TestGoFiles...)</code></pre>
 
         return true
 })</code></pre>
-<p><a href="https://play.golang.org/p/eSq5yKb1SHz" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/OxkorEh3KlJ" target="_blank">Go Playground</a>でコードを見る。</p>
 <p>以下のタグが取得できました。</p>
 <pre><code>`json:&#34;id&#34; xml:&#34;id&#34;`
 `json:&#34;data,omitempty&#34; xml:&#34;data&#34;`</code></pre>
@@ -305,11 +307,11 @@ files = append(files, p.TestGoFiles...)</code></pre>
 <pre><code>fset := token.NewFileSet()
 file, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
 if err != nil {
-        panic(err)
+        log.Fatal(&#34;Error:&#34;, err)
 }
 
 format.Node(os.Stdout, fset, file)</code></pre>
-<p><a href="https://play.golang.org/p/JPHOR9LcQs7" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/mMA4NBsiQ8U" target="_blank">Go Playground</a>でコードを見る。</p>
 <p>こちらを実行すると、元のコードがそのまま出力されます。</p>
 <p>そして、 <code>format.Node</code> に渡す <code>node</code> を書き換えることで生成されるコードも書き換わります。試しに全てのフィールドを出力しないようにする、<code>&#34;-&#34;</code> に書き換えてみましょう。</p>
 <pre><code>ast.Inspect(file, func(node ast.Node) bool {
@@ -329,7 +331,7 @@ format.Node(os.Stdout, fset, file)</code></pre>
 })
 
 format.Node(os.Stdout, fset, file)</code></pre>
-<p><a href="https://play.golang.org/p/YNGB6X1ryQZ" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/ZLaXAZAUdN6" target="_blank">Go Playground</a>でコードを見る。</p>
 <p>出力されるコートが以下のように書き換わります。</p>
 <pre><code>package a
 
@@ -351,7 +353,7 @@ type Resource struct {
 <pre><code>func unquote(tag string) string {
         s, err := strconv.Unquote(tag)
         if err != nil {
-                panic(err)
+                panic(err) // 不正なタグはParseFileでエラーになる
         }
         return s
 }</code></pre>
@@ -458,7 +460,7 @@ json:&#34;data,omitempty&#34; xml:&#34;data&#34;</code></pre>
 })
 
 format.Node(os.Stdout, fset, file)</code></pre>
-<p><a href="https://play.golang.org/p/1NCmiaAwGiE" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/YZhkLE9Zj3s" target="_blank">Go Playground</a>でコードを見る。</p>
 <p>こちらのコードで使用している <code>quote</code> 関数は <code>unquote</code> の対となる、次のような関数です。</p>
 <pre><code>func quote(tag string) string {
         return &#34;`&#34; + tag + &#34;`&#34;
@@ -529,7 +531,7 @@ type Resource struct {
                 `                 datastore:&#34;data&#34; json:&#34;data&#34;`,
         },
 },</code></pre>
-<p><a href="https://play.golang.org/p/1RlPZMktoGf" target="_blank">Go Playground</a>でコードを見る。</p>
+<p><a href="https://play.golang.org/p/lKLb9tW0kNS" target="_blank">Go Playground</a>でコードを見る。</p>
 <p>全てPASSしました!</p>
 <pre><code>=== RUN   TestAlign
 === RUN   TestAlign/single_tag
