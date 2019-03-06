@@ -38,6 +38,7 @@
 <p>しかし、標準付属の <code>gofmt</code> は構造体のタグを整形してくれないため、手でスペースを入力する必要があります。最初はそれでも良いかもしれませんが、段々と大変になるので、ツールなどに頼らないと継続的なメンテナンスが困難になってしまうでしょう。</p>
 <p>幸いGoにはソースコードを静的解析したり、生成するためのパッケージがあるため、それらを使用することで構造体のタグを整形することができます。</p>
 <p>本コードラボでは<a href="https://golang.org/pkg/go/ast/" target="_blank">go/ast</a>をはじめとする、<a href="https://golang.org/pkg/go/" target="_blank">go/</a>配下のパッケージの使い方を学び、実際に構造体のタグを整形するツールを作成します。</p>
+<p>なお、静的解析の基礎については深く解説しないため、<a href="https://golangtokyo.github.io/codelab/find-gophers?index=codelab" target="_blank">こちら</a>のコードラボで学習しておくことをおすすめします。</p>
 <aside class="special"><p><strong>注</strong>: 構造体のタグは正式なフォーマットが規定されていません。このコードラボ で作成するのはあくまでも上記のような独自のコーディング規約があるプロジェクトで使用することを想定したものです。</p>
 </aside>
 
@@ -552,6 +553,12 @@ All tests passed.</code></pre>
       <google-codelab-step label="おめでとうございます!" duration="1">
         <p>構造体のタグを整形する方法について学びました!</p>
 <p>学習した内容を <code>main.go</code> を含むコマンドラインツールとして実装し、<a href="https://github.com" target="_blank">github.com</a>で公開しましょう。</p>
+<h2><strong>参考</strong></h2>
+<ul>
+<li>コマンドラインフラグを処理する: <a href="https://golang.org/pkg/flag/" target="_blank">https://golang.org/pkg/flag/</a></li>
+<li>コマンドライン引数を直接扱う: <a href="https://golang.org/pkg/os/#pkg-variables" target="_blank">https://golang.org/pkg/os/#pkg-variables</a> の <code>Args</code></li>
+<li>静的解析用の統一的なインターフェース: <a href="https://godoc.org/golang.org/x/tools/go/analysis" target="_blank">https://godoc.org/golang.org/x/tools/go/analysis</a></li>
+</ul>
 
 
       </google-codelab-step>
