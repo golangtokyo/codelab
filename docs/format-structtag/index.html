@@ -82,7 +82,7 @@ if err != nil {
 <h2><strong>パッケージから取得する取得する</strong></h2>
 <p>パッケージから取得する場合、ファイルやディレクトリのような関数が用意されていないため、まずはパッケージ名から対象のファイルやディレクトリを取得する必要があります。</p>
 <p>パッケージ名からパッケージの情報を取得するには <code>go/build</code> パッケージを使用します。 <code>GOOS</code> や <code>GOARCH</code> などが実行環境のもので良ければ<a href="https://golang.org/pkg/go/build/#Context.Import" target="_blank">Default.Import</a>、変更する必要がある場合は<a href="https://golang.org/pkg/go/build/#Context" target="_blank">Context</a>を作成した上で<a href="https://golang.org/pkg/go/build/#Context.Import" target="_blank">Import</a>メソッドを呼ぶと<a href="https://golang.org/pkg/go/build/#Package" target="_blank">*Package</a>が取得できます。</p>
-<aside class="special"><p><strong>注</strong>: Go1.12以降の場合、より静的解析に向けて作られた<a href="https://godoc.org/golang.org/x/tools/go/packages" target="_blank">golang.org/x/tools/go/packages</a>パッケージを使用してパッケージの情報を取得することもできます。</p>
+<aside class="special"><p><strong>注</strong>: Go Modulesに対応したツールを作る場合は、go/buildではなく<a href="https://godoc.org/golang.org/x/tools/go/packages" target="_blank">golang.org/x/tools/go/packages</a>パッケージを用いてください。</p>
 </aside>
 <p>通常のソースは <code>Package.GoFiles</code> に格納されていますが、CGO用のソースやテスト用のファイルはそれぞれ <code>CgoFiles</code> 、 <code>TestGoFiles</code> と異なるフィールドに格納されているので必要に応じて組み合わせて使ってください。また、ディレクトリは <code>Package.Dir</code> です。</p>
 <pre><code>p, err := build.Default.Import(name, &#34;&#34;, 0)
