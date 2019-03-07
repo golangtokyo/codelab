@@ -1,0 +1,597 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>構造体のタグを整形しよう！</title>
+  <script src="/codelab/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="/codelab/elements/codelab.html">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <style is="custom-style">
+    body {
+      font-family: "Roboto",sans-serif;
+      background: var(--google-codelab-background, #F8F9FA);
+    }
+  </style>
+  
+</head>
+<body unresolved class="fullbleed">
+
+  <google-codelab title="構造体のタグを整形しよう！"
+                  environment="web"
+                  feedback-link="https://github.com/golangtokyo/codelab/issues">
+    
+      <google-codelab-step label="概要" duration="1">
+        <p>Goのコードを書いていると、以下のような構造体のタグを、</p>
+<pre><code>type Resource struct {
+        ID   int64    `json:&#34;id&#34; xml:&#34;id&#34;`
+        Data []string `json:&#34;data,omitempty&#34; xml:&#34;data&#34;`
+}</code></pre>
+<p>次のように整形したくなることがあるかもしれません。</p>
+<pre><code>type Resource struct {
+        ID   int64    `json:&#34;id&#34;             xml:&#34;id&#34;`
+        Data []string `json:&#34;data,omitempty&#34; xml:&#34;data&#34;`
+}</code></pre>
+<p>しかし、標準付属の <code>gofmt</code> は構造体のタグを整形してくれないため、手でスペースを入力する必要があります。最初はそれでも良いかもしれませんが、段々と大変になるので、ツールなどに頼らないと継続的なメンテナンスが困難になってしまうでしょう。</p>
+<p>幸いGoにはソースコードを静的解析したり、生成するためのパッケージがあるため、それらを使用することで構造体のタグを整形することができます。</p>
+<p>本コードラボでは<a href="https://golang.org/pkg/go/ast/" target="_blank">go/ast</a>をはじめとする、<a href="https://golang.org/pkg/go/" target="_blank">go/</a>配下のパッケージの使い方を学び、実際に構造体のタグを整形するツールを作成します。</p>
+<p>なお、静的解析の基礎については深く解説しないため、<a href="https://golangtokyo.github.io/codelab/find-gophers?index=codelab" target="_blank">こちら</a>のコードラボで学習しておくことをおすすめします。</p>
+<aside class="special"><p><strong>注</strong>: 構造体のタグは正式なフォーマットが規定されていません。このコードラボ で作成するのはあくまでも上記のような独自のコーディング規約があるプロジェクトで使用することを想定したものです。</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="抽象構文木の取得" duration="5">
+        <p>Goのソースコードから構造体のタグを取得するには、まずソースコードを抽象構文木(ast)に変換し、目的の要素を探索していく必要があります。</p>
+<p>コマンドラインツールとして実装する場合、対象のソースコードを指定する方法として、以下の3つが考えられます。</p>
+<ul>
+<li>ファイル</li>
+<li>ディレクトリ</li>
+<li>パッケージ</li>
+</ul>
+<h2><strong>ファイルから取得する</strong></h2>
+<p>ファイルから取得するには <code>go/parser</code> パッケージの<a href="https://golang.org/pkg/go/parser/#ParseFile" target="_blank">ParseFile</a>関数を使用します。</p>
+<p>第一引数の <code>fset</code> には解析したファイルの情報を記録するためのものです。こちらには <code>go/token</code> パッケージの<a href="https://golang.org/pkg/go/token/#NewFileSet" target="_blank">NewFileSet</a>関数で作成した<a href="https://golang.org/pkg/go/token/#FileSet" target="_blank">*FileSet</a>を指定します。</p>
+<p>第二引数の <code>filename</code> と第三引数の <code>src</code> でファイルを指定します。 <code>src</code> が <code>nil</code> の場合、 <code>filename</code> のファイルが解析されます。 <code>src</code> が <code>string</code> や <code>[]byte</code> 、 <code>io.Reader</code> の場合は <code>src</code> が解析され、 <code>filename</code> は <code>fset</code> に記録される名前として使用されるだけです。そのため、標準入力やネットワーク越しにファイルを指定する際などは <code>src</code> を設定することになります。</p>
+<p>このコードラボでは <code>src</code> として、コード中に以下のソースコードを埋め込んだものを使用して解説していきます。</p>
+<pre><code>package a
+
+type Resource struct {
+        ID   int64    `json:&#34;id&#34; xml:&#34;id&#34;`
+        Data []string `json:&#34;data,omitempty&#34; xml:&#34;data&#34;`
+}</code></pre>
+<p><a href="https://play.golang.org/p/G7k5mB5NgtD" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>第四引数の <code>mode</code> は<a href="https://golang.org/pkg/go/parser/#Mode" target="_blank">Mode</a>です。こちらは <code>0</code> でも問題ありませんが、少なくとも <code>ParseComments</code> は指定し、コメントを取得するようにしておくのが良いでしょう。</p>
+<pre><code>fset := token.NewFileSet()
+file, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
+if err != nil {
+        log.Fatal(&#34;Error:&#34;, err)
+}</code></pre>
+<p><a href="https://play.golang.org/p/cGQMtVuP2Py" target="_blank">Go Playground</a>でコードを見る。</p>
+<h2><strong>ディレクトリから取得する</strong></h2>
+<p>ディレクトリから取得するには、配下にあるファイルごとに <code>ParseFile</code> を呼んでいっても構いませんが、同じく <code>go/parser</code> パッケージにある<a href="https://golang.org/pkg/go/parser/#ParseDir" target="_blank">ParseDir</a>関数を使用するのが簡単です。こちらは <code>&#34;.go&#34;</code> で終わるファイルのみが対象になり、第三引数の <code>filter</code> で追加のフィルタ条件を指定することもできます。</p>
+<pre><code>fset := token.NewFileSet()
+files, err := parser.ParseDir(fset, path, nil, parser.ParseComments)
+if err != nil {
+        log.Fatal(&#34;Error:&#34;, err)
+}</code></pre>
+<h2><strong>パッケージから取得する取得する</strong></h2>
+<p>パッケージから取得する場合、ファイルやディレクトリのような関数が用意されていないため、まずはパッケージ名から対象のファイルやディレクトリを取得する必要があります。</p>
+<p>パッケージ名からパッケージの情報を取得するには <code>go/build</code> パッケージを使用します。 <code>GOOS</code> や <code>GOARCH</code> などが実行環境のもので良ければ<a href="https://golang.org/pkg/go/build/#Context.Import" target="_blank">Default.Import</a>、変更する必要がある場合は<a href="https://golang.org/pkg/go/build/#Context" target="_blank">Context</a>を作成した上で<a href="https://golang.org/pkg/go/build/#Context.Import" target="_blank">Import</a>メソッドを呼ぶと<a href="https://golang.org/pkg/go/build/#Package" target="_blank">*Package</a>が取得できます。</p>
+<aside class="special"><p><strong>注</strong>: Go Modulesに対応したツールを作る場合は、go/buildではなく<a href="https://godoc.org/golang.org/x/tools/go/packages" target="_blank">golang.org/x/tools/go/packages</a>パッケージを用いてください。</p>
+</aside>
+<p>通常のソースは <code>Package.GoFiles</code> に格納されていますが、CGO用のソースやテスト用のファイルはそれぞれ <code>CgoFiles</code> 、 <code>TestGoFiles</code> と異なるフィールドに格納されているので必要に応じて組み合わせて使ってください。また、ディレクトリは <code>Package.Dir</code> です。</p>
+<pre><code>p, err := build.Default.Import(name, &#34;&#34;, 0)
+if err != nil {
+        log.Fatal(&#34;Error:&#34;, err)
+}
+
+var files []string
+files = append(files, p.GoFiles...)
+files = append(files, p.TestGoFiles...)</code></pre>
+<aside class="special"><p><strong>注</strong>: <code>Default.Import()</code> の結果に何が格納されているかは <code>go list -f &#39;&#123;&#123;join .GoFiles &#34; &#34;}}&#39; [PACKAGE_NAME]</code> で確認することができます。</p>
+</aside>
+<h2><strong>抽象構文木を出力する</strong></h2>
+<p>それでは取得した抽象構文木を出力してみましょう。抽象構文木は <code>go/ast</code> パッケージの<a href="https://golang.org/pkg/go/ast/#Print" target="_blank">Print</a>関数で出力できます。</p>
+<pre><code>ast.Print(fset, file)</code></pre>
+<p><a href="https://play.golang.org/p/KfB05Ju4vsj" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>実行すると次のようになります。</p>
+<pre><code>     0  *ast.File {
+     1  .  Package: a.go:1:1
+     2  .  Name: *ast.Ident {
+     3  .  .  NamePos: a.go:1:9
+     4  .  .  Name: &#34;a&#34;
+     5  .  }
+     6  .  Decls: []ast.Decl (len = 1) {
+     7  .  .  0: *ast.GenDecl {
+     8  .  .  .  TokPos: a.go:3:1
+     9  .  .  .  Tok: type
+    10  .  .  .  Lparen: -
+    11  .  .  .  Specs: []ast.Spec (len = 1) {
+    12  .  .  .  .  0: *ast.TypeSpec {
+    13  .  .  .  .  .  Name: *ast.Ident {
+    14  .  .  .  .  .  .  NamePos: a.go:3:6
+    15  .  .  .  .  .  .  Name: &#34;Resource&#34;
+    16  .  .  .  .  .  .  Obj: *ast.Object {
+    17  .  .  .  .  .  .  .  Kind: type
+    18  .  .  .  .  .  .  .  Name: &#34;Resource&#34;
+    19  .  .  .  .  .  .  .  Decl: *(obj @ 12)
+    20  .  .  .  .  .  .  }
+    21  .  .  .  .  .  }
+    22  .  .  .  .  .  Assign: -
+    23  .  .  .  .  .  Type: *ast.StructType {
+    24  .  .  .  .  .  .  Struct: a.go:3:15
+    25  .  .  .  .  .  .  Fields: *ast.FieldList {
+    26  .  .  .  .  .  .  .  Opening: a.go:3:22
+    27  .  .  .  .  .  .  .  List: []*ast.Field (len = 2) {
+    28  .  .  .  .  .  .  .  .  0: *ast.Field {
+    29  .  .  .  .  .  .  .  .  .  Names: []*ast.Ident (len = 1) {
+    30  .  .  .  .  .  .  .  .  .  .  0: *ast.Ident {
+    31  .  .  .  .  .  .  .  .  .  .  .  NamePos: a.go:4:2
+    32  .  .  .  .  .  .  .  .  .  .  .  Name: &#34;ID&#34;
+    33  .  .  .  .  .  .  .  .  .  .  .  Obj: *ast.Object {
+    34  .  .  .  .  .  .  .  .  .  .  .  .  Kind: var
+    35  .  .  .  .  .  .  .  .  .  .  .  .  Name: &#34;ID&#34;
+    36  .  .  .  .  .  .  .  .  .  .  .  .  Decl: *(obj @ 28)
+    37  .  .  .  .  .  .  .  .  .  .  .  }
+    38  .  .  .  .  .  .  .  .  .  .  }
+    39  .  .  .  .  .  .  .  .  .  }
+    40  .  .  .  .  .  .  .  .  .  Type: *ast.Ident {
+    41  .  .  .  .  .  .  .  .  .  .  NamePos: a.go:4:7
+    42  .  .  .  .  .  .  .  .  .  .  Name: &#34;int64&#34;
+    43  .  .  .  .  .  .  .  .  .  }
+    44  .  .  .  .  .  .  .  .  .  Tag: *ast.BasicLit {
+    45  .  .  .  .  .  .  .  .  .  .  ValuePos: a.go:4:16
+    46  .  .  .  .  .  .  .  .  .  .  Kind: STRING
+    47  .  .  .  .  .  .  .  .  .  .  Value: &#34;`json:\&#34;id\&#34; xml:\&#34;id\&#34;`&#34;
+    48  .  .  .  .  .  .  .  .  .  }
+    49  .  .  .  .  .  .  .  .  }
+    50  .  .  .  .  .  .  .  .  1: *ast.Field {
+    51  .  .  .  .  .  .  .  .  .  Names: []*ast.Ident (len = 1) {
+    52  .  .  .  .  .  .  .  .  .  .  0: *ast.Ident {
+    53  .  .  .  .  .  .  .  .  .  .  .  NamePos: a.go:5:2
+    54  .  .  .  .  .  .  .  .  .  .  .  Name: &#34;Data&#34;
+    55  .  .  .  .  .  .  .  .  .  .  .  Obj: *ast.Object {
+    56  .  .  .  .  .  .  .  .  .  .  .  .  Kind: var
+    57  .  .  .  .  .  .  .  .  .  .  .  .  Name: &#34;Data&#34;
+    58  .  .  .  .  .  .  .  .  .  .  .  .  Decl: *(obj @ 50)
+    59  .  .  .  .  .  .  .  .  .  .  .  }
+    60  .  .  .  .  .  .  .  .  .  .  }
+    61  .  .  .  .  .  .  .  .  .  }
+    62  .  .  .  .  .  .  .  .  .  Type: *ast.ArrayType {
+    63  .  .  .  .  .  .  .  .  .  .  Lbrack: a.go:5:7
+    64  .  .  .  .  .  .  .  .  .  .  Elt: *ast.Ident {
+    65  .  .  .  .  .  .  .  .  .  .  .  NamePos: a.go:5:9
+    66  .  .  .  .  .  .  .  .  .  .  .  Name: &#34;string&#34;
+    67  .  .  .  .  .  .  .  .  .  .  }
+    68  .  .  .  .  .  .  .  .  .  }
+    69  .  .  .  .  .  .  .  .  .  Tag: *ast.BasicLit {
+    70  .  .  .  .  .  .  .  .  .  .  ValuePos: a.go:5:16
+    71  .  .  .  .  .  .  .  .  .  .  Kind: STRING
+    72  .  .  .  .  .  .  .  .  .  .  Value: &#34;`json:\&#34;data,omitempty\&#34; xml:\&#34;data\&#34;`&#34;
+    73  .  .  .  .  .  .  .  .  .  }
+    74  .  .  .  .  .  .  .  .  }
+    75  .  .  .  .  .  .  .  }
+    76  .  .  .  .  .  .  .  Closing: a.go:6:1
+    77  .  .  .  .  .  .  }
+    78  .  .  .  .  .  .  Incomplete: false
+    79  .  .  .  .  .  }
+    80  .  .  .  .  }
+    81  .  .  .  }
+    82  .  .  .  Rparen: -
+    83  .  .  }
+    84  .  }
+    85  .  Scope: *ast.Scope {
+    86  .  .  Objects: map[string]*ast.Object (len = 1) {
+    87  .  .  .  &#34;Resource&#34;: *(obj @ 16)
+    88  .  .  }
+    89  .  }
+    90  .  Unresolved: []*ast.Ident (len = 2) {
+    91  .  .  0: *(obj @ 40)
+    92  .  .  1: *(obj @ 64)
+    93  .  }
+    94  }</code></pre>
+<aside class="special"><p><strong>注</strong>: <code>gotype -ast -comments FILE_NAME</code> コマンドでも同様の結果を得ることができます。</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="抽象構文木の探索" duration="3">
+        <p>抽象構文木を探索するには、 <code>go/ast</code> パッケージの<a href="https://golang.org/pkg/go/ast/#Inspect" target="_blank">Inspect</a>関数を使用します。探索する動作をより詳細に指定したい場合は<a href="https://golang.org/pkg/go/ast/#Visitor" target="_blank">Visitor</a>を実装した上で<a href="https://golang.org/pkg/go/ast/#Walk" target="_blank">Walk</a>関数を使用することもできます。</p>
+<p><code>Inspect</code> 関数は <code>false</code> が返ってくるまで探索を継続します。以下のコードは <code>ast.Node</code> として渡された <code>file</code> を出力したらそこで探索が終了するため、先ほどと同じ実行結果になります。</p>
+<pre><code>ast.Inspect(file, func(node ast.Node) bool {
+        ast.Print(fset, node)
+        return false
+})</code></pre>
+<p><a href="https://play.golang.org/p/lLRyX1SPl-A" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>今回は構造体の定義からタグを取得したいので <code>node</code> が <code>*ast.StructType</code> のものを探索していきます。<a href="https://golang.org/pkg/go/ast/#Node" target="_blank">ast.Node</a>は <code>interface</code> なので型アサーションで実際の型をチェックしていきます。</p>
+<pre><code>ast.Inspect(file, func(node ast.Node) bool {
+        s, ok := node.(*ast.StructType)
+        if !ok {
+                return true
+        }
+
+        ast.Print(fset, s)
+
+        return true
+})</code></pre>
+<p><a href="https://play.golang.org/p/8iag3W4lAld" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>これで構造体の抽象構文木のみが出力されるようになりました。</p>
+<pre><code>     0  *ast.StructType {
+     1  .  Struct: a.go:3:15
+     2  .  Fields: *ast.FieldList {
+     3  .  .  Opening: a.go:3:22
+     4  .  .  List: []*ast.Field (len = 2) {
+     5  .  .  .  0: *ast.Field {
+     6  .  .  .  .  Names: []*ast.Ident (len = 1) {
+     7  .  .  .  .  .  0: *ast.Ident {
+     8  .  .  .  .  .  .  NamePos: a.go:4:2
+     9  .  .  .  .  .  .  Name: &#34;ID&#34;
+    10  .  .  .  .  .  .  Obj: *ast.Object {
+    11  .  .  .  .  .  .  .  Kind: var
+    12  .  .  .  .  .  .  .  Name: &#34;ID&#34;
+    13  .  .  .  .  .  .  .  Decl: *(obj @ 5)
+    14  .  .  .  .  .  .  }
+    15  .  .  .  .  .  }
+    16  .  .  .  .  }
+    17  .  .  .  .  Type: *ast.Ident {
+    18  .  .  .  .  .  NamePos: a.go:4:7
+    19  .  .  .  .  .  Name: &#34;int64&#34;
+    20  .  .  .  .  }
+    21  .  .  .  .  Tag: *ast.BasicLit {
+    22  .  .  .  .  .  ValuePos: a.go:4:16
+    23  .  .  .  .  .  Kind: STRING
+    24  .  .  .  .  .  Value: &#34;`json:\&#34;id\&#34; xml:\&#34;id\&#34;`&#34;
+    25  .  .  .  .  }
+    26  .  .  .  }
+    27  .  .  .  1: *ast.Field {
+    28  .  .  .  .  Names: []*ast.Ident (len = 1) {
+    29  .  .  .  .  .  0: *ast.Ident {
+    30  .  .  .  .  .  .  NamePos: a.go:5:2
+    31  .  .  .  .  .  .  Name: &#34;Data&#34;
+    32  .  .  .  .  .  .  Obj: *ast.Object {
+    33  .  .  .  .  .  .  .  Kind: var
+    34  .  .  .  .  .  .  .  Name: &#34;Data&#34;
+    35  .  .  .  .  .  .  .  Decl: *(obj @ 27)
+    36  .  .  .  .  .  .  }
+    37  .  .  .  .  .  }
+    38  .  .  .  .  }
+    39  .  .  .  .  Type: *ast.ArrayType {
+    40  .  .  .  .  .  Lbrack: a.go:5:7
+    41  .  .  .  .  .  Elt: *ast.Ident {
+    42  .  .  .  .  .  .  NamePos: a.go:5:9
+    43  .  .  .  .  .  .  Name: &#34;string&#34;
+    44  .  .  .  .  .  }
+    45  .  .  .  .  }
+    46  .  .  .  .  Tag: *ast.BasicLit {
+    47  .  .  .  .  .  ValuePos: a.go:5:16
+    48  .  .  .  .  .  Kind: STRING
+    49  .  .  .  .  .  Value: &#34;`json:\&#34;data,omitempty\&#34; xml:\&#34;data\&#34;`&#34;
+    50  .  .  .  .  }
+    51  .  .  .  }
+    52  .  .  }
+    53  .  .  Closing: a.go:6:1
+    54  .  }
+    55  .  Incomplete: false
+    56  }</code></pre>
+<p>次は<a href="https://golang.org/pkg/go/ast/#StructType" target="_blank">ast.StructType</a>からタグの値を取得します。タグは <code>StructType.Fields.List[].Tag</code>に<a href="https://golang.org/pkg/go/ast/#BasicLit" target="_blank">ast.BasicLit</a>として格納されており、 <code>BasicLit</code> の <code>Value</code> からその文字列を取得できます。</p>
+<pre><code>ast.Inspect(file, func(node ast.Node) bool {
+        s, ok := node.(*ast.StructType)
+        if !ok {
+                return true
+        }
+
+        for _, f := range s.Fields.List {
+                if f.Tag == nil {
+                        continue
+                }
+                fmt.Println(f.Tag.Value)
+        }
+
+        return true
+})</code></pre>
+<p><a href="https://play.golang.org/p/OxkorEh3KlJ" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>以下のタグが取得できました。</p>
+<pre><code>`json:&#34;id&#34; xml:&#34;id&#34;`
+`json:&#34;data,omitempty&#34; xml:&#34;data&#34;`</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="抽象構文木からのコード生成" duration="3">
+        <p>目的の要素を取得できるようになったので、次はコードの生成です。抽象構文木から実際のコードを出力するには、 <code>go/printer</code> の<a href="https://golang.org/pkg/go/printer/#Fprint" target="_blank">Fprint</a>関数、または <code>go/format</code> の<a href="https://golang.org/pkg/go/format/#Node" target="_blank">Node</a>関数を使用します。どちらも一見同じような出力に見えますが、 <code>printer.Fprint</code> は空白がタブではなく、スペースになるため、 <code>gofmt</code> とは異なる出力になります。そのため、そのまま使えるコードを生成するには <code>format.Node</code> を使用します。</p>
+<pre><code>fset := token.NewFileSet()
+file, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
+if err != nil {
+        log.Fatal(&#34;Error:&#34;, err)
+}
+
+format.Node(os.Stdout, fset, file)</code></pre>
+<p><a href="https://play.golang.org/p/mMA4NBsiQ8U" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>こちらを実行すると、元のコードがそのまま出力されます。</p>
+<p>そして、 <code>format.Node</code> に渡す <code>node</code> を書き換えることで生成されるコードも書き換わります。試しに全てのフィールドを出力しないようにする、<code>&#34;-&#34;</code> に書き換えてみましょう。</p>
+<pre><code>ast.Inspect(file, func(node ast.Node) bool {
+        s, ok := node.(*ast.StructType)
+        if !ok {
+                return true
+        }
+
+        for _, f := range s.Fields.List {
+                if f.Tag == nil {
+                        continue
+                }
+                f.Tag.Value = &#34;`&#34; + `json:&#34;-&#34; xml:&#34;-&#34;` + &#34;`&#34;
+        }
+
+        return true
+})
+
+format.Node(os.Stdout, fset, file)</code></pre>
+<p><a href="https://play.golang.org/p/ZLaXAZAUdN6" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>出力されるコートが以下のように書き換わります。</p>
+<pre><code>package a
+
+type Resource struct {
+        ID   int64    `json:&#34;-&#34; xml:&#34;-&#34;`
+        Data []string `json:&#34;-&#34; xml:&#34;-&#34;`
+}</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="タグの整形" duration="7">
+        <p>それでは実際にタグを整形する処理を実装してみましょう。内容としては、構造体のタグを以下のような、長さがフィールド数のスライスとして受け取って整形する、といったものです。</p>
+<pre><code>var tags = []string{
+        `json:&#34;id&#34; xml:&#34;id&#34;`,
+        `json:&#34;data,omitempty&#34; xml:&#34;data&#34;`,
+}</code></pre>
+<p>なお、 <code>Tag.Value</code> には <code>`</code> が含まれた文字列が格納されているため、以下のような関数を通して取り除いたものを前提とします。</p>
+<pre><code>func unquote(tag string) string {
+        s, err := strconv.Unquote(tag)
+        if err != nil {
+                panic(err) // 不正なタグはParseFileでエラーになる
+        }
+        return s
+}</code></pre>
+<p>このコードラボでは、タグ名は次の正規表現で取得する実装にします。</p>
+<pre><code>var reTagName = regexp.MustCompile(`(\w+):`)</code></pre>
+<p><a href="https://play.golang.org/p/9tWhrBC6toE" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>また、タグの値は<a href="https://golang.org/pkg/reflect/#StructTag" target="_blank">reflect.StructTag</a>型から<a href="https://golang.org/pkg/reflect/#StructTag.Get" target="_blank">Get</a>や<a href="https://golang.org/pkg/reflect/#StructTag.Lookup" target="_blank">Lookup</a>で取得するようにします。</p>
+<pre><code>reflect.StructTag(tag).Get(tagname)</code></pre>
+<p><a href="https://play.golang.org/p/DP0nX-TtizX" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>さて、整形のルールですが、今回は次のように実装します。</p>
+<ul>
+<li>構造体全体で出現した順番にタグ名を並び替える</li>
+<li>タグの後ろには、そのタグ名の最も長いタグに合わせてスペースを入れる</li>
+<li>タグとタグの間には少なくとも1つ以上のスペースを入れる</li>
+<li>末尾のタグの後ろにあるスペースは除去する</li>
+</ul>
+<p>そのため、以下の <code>structTags</code> 型に必要な情報を保持するようにします。</p>
+<pre><code>type structTags struct {
+        tags   []reflect.StructTag // 各フィールドのタグ
+        length map[string]int      // キーのタグ名の最も長いタグの長さ
+        order  []string            // タグ名の順序
+}</code></pre>
+<p>そして <code>aligned</code> メソッドにフィールド番号を渡すことで、整形済みのタグを得られるようにします。</p>
+<pre><code>func (st *structTags) aligned(index int) string {
+        b := new(bytes.Buffer)
+        for _, tagname := range st.order {
+                var t string
+                if value, ok := st.tags[index].Lookup(tagname); ok {
+                        t = tagstr(tagname, value)
+                }
+                b.WriteString(t)
+
+                // 一番後ろに少なくとも1つはスペースを入れる
+                b.WriteString(strings.Repeat(&#34; &#34;, st.length[tagname]-len(t)+1))
+        }
+        return strings.TrimRight(b.String(), &#34; &#34;)
+}
+
+func tagstr(tagname, value string) string {
+        return tagname + `:&#34;` + value + `&#34;`
+}</code></pre>
+<p>ただ、 <code>structTags</code> のフィールドは簡単に作ることができないため、コンストラクタを用意しておきます。</p>
+<pre><code>func newStructTags(tags []string) *structTags {
+        st := structTags{
+                tags:   make([]reflect.StructTag, len(tags)),
+                length: map[string]int{},
+        }
+        for i, tag := range tags {
+                if tag == &#34;&#34; {
+                        continue
+                }
+
+                rst := reflect.StructTag(tag)
+                for _, match := range reTagName.FindAllStringSubmatch(tag, -1) {
+                        tagname := match[1]
+                        length, ok := st.length[tagname]
+                        if !ok {
+                                // 初めて出現したタグ名を登録
+                                st.order = append(st.order, tagname)
+                        }
+                        if l := len(tagstr(tagname, rst.Get(tagname))); l &gt; length {
+                                // 最も長いタグの長さを更新
+                                st.length[tagname] = l
+                        }
+                }
+                st.tags[i] = rst
+        }
+        return &amp;st
+}</code></pre>
+<p>これを以下のようにして使うことで、タグを整形します。</p>
+<pre><code>st := newStructTags(tags)
+for i := range tags {
+        if tags[i] != &#34;&#34; {
+                tags[i] = st.aligned(i)
+        }
+}</code></pre>
+<p><a href="https://play.golang.org/p/rZBtmFrStAT" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>実行すると、tagsの内容が以下のようになります。</p>
+<pre><code>json:&#34;id&#34;             xml:&#34;id&#34;
+json:&#34;data,omitempty&#34; xml:&#34;data&#34;</code></pre>
+<p>これでタグを整形する処理が実装できました。こちらを <code>Align</code> 関数として定義し、以下のようにして <code>Tag.Value</code> を書き換えます。</p>
+<pre><code>ast.Inspect(file, func(node ast.Node) bool {
+        s, ok := node.(*ast.StructType)
+        if !ok {
+                return true
+        }
+
+        tags := make([]string, len(s.Fields.List))
+        for i, f := range s.Fields.List {
+                if f.Tag == nil {
+                        continue
+                }
+                tags[i] = unquote(f.Tag.Value)
+        }
+
+        for i, tag := range Align(tags) {
+                if s.Fields.List[i].Tag == nil {
+                        continue
+                }
+                s.Fields.List[i].Tag.Value = quote(tag)
+        }
+
+        return true
+})
+
+format.Node(os.Stdout, fset, file)</code></pre>
+<p><a href="https://play.golang.org/p/YZhkLE9Zj3s" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>こちらのコードで使用している <code>quote</code> 関数は <code>unquote</code> の対となる、次のような関数です。</p>
+<pre><code>func quote(tag string) string {
+        return &#34;`&#34; + tag + &#34;`&#34;
+}</code></pre>
+<p>実行すると構造体のタグが整形された状態で、完全なソースが出力されます。</p>
+<pre><code>package a
+
+type Resource struct {
+        ID   int64    `json:&#34;id&#34;             xml:&#34;id&#34;`
+        Data []string `json:&#34;data,omitempty&#34; xml:&#34;data&#34;`
+}</code></pre>
+<p>念のため他のパターンも確認してみましょう。まずはテストコードの雛形を準備します。</p>
+<pre><code>func TestAlign(t *testing.T) {
+        type args struct {
+                tags []string
+        }
+        tests := []struct {
+                name string
+                args args
+                want []string
+        }{
+                // TODO: パターンを書いていく
+        }
+        for _, tt := range tests {
+                t.Run(tt.name, func(t *testing.T) {
+                        tags := Align(tt.args.tags)
+                        got := strings.Join(tags, &#34;\n&#34;)
+                        want := strings.Join(tt.want, &#34;\n&#34;)
+                        if got != want {
+                                t.Errorf(&#34;Align()\n[got]\n%v\n[want]\n%v&#34;, got, want)
+                        }
+                })
+        }
+}</code></pre>
+<p>確認するのは以下の3パターンです。</p>
+<pre><code>{
+        name: &#34;single tag&#34;,
+        args: args{tags: []string{
+                `json:&#34;id&#34;`,
+                `json:&#34;data,omitempty&#34;`,
+        }},
+        want: []string{
+                `json:&#34;id&#34;`,
+                `json:&#34;data,omitempty&#34;`,
+        },
+},
+{
+        name: &#34;multiple tag&#34;,
+        args: args{tags: []string{
+                `json:&#34;id&#34; xml:&#34;id&#34;`,
+                `json:&#34;data,omitempty&#34; xml:&#34;data&#34;`,
+        }},
+        want: []string{
+                `json:&#34;id&#34;             xml:&#34;id&#34;`,
+                `json:&#34;data,omitempty&#34; xml:&#34;data&#34;`,
+        },
+},
+{
+        name: &#34;goon with json&#34;,
+        args: args{tags: []string{
+                `goon:&#34;kind,Kind&#34;`,
+                `datastore:&#34;-&#34; goon:&#34;id&#34; json:&#34;id&#34;`,
+                `datastore:&#34;data&#34; json:&#34;data&#34;`,
+        }},
+        want: []string{
+                `goon:&#34;kind,Kind&#34;`,
+                `goon:&#34;id&#34;        datastore:&#34;-&#34;    json:&#34;id&#34;`,
+                `                 datastore:&#34;data&#34; json:&#34;data&#34;`,
+        },
+},</code></pre>
+<p><a href="https://play.golang.org/p/lKLb9tW0kNS" target="_blank">Go Playground</a>でコードを見る。</p>
+<p>全てPASSしました!</p>
+<pre><code>=== RUN   TestAlign
+=== RUN   TestAlign/single_tag
+=== RUN   TestAlign/multiple_tag
+=== RUN   TestAlign/goon_with_json
+--- PASS: TestAlign (0.00s)
+    --- PASS: TestAlign/single_tag (0.00s)
+    --- PASS: TestAlign/multiple_tag (0.00s)
+    --- PASS: TestAlign/goon_with_json (0.00s)
+PASS
+
+All tests passed.</code></pre>
+<p>今回はGo Playgroundで実行可能なコードにしていたので実際のコードは紹介していませんが、もし <code>gofmt</code>の <code>-w</code> フラグのように、ファイルを直接上書きしたい場合、 <code>format.Node</code> の出力先を<a href="https://golang.org/pkg/os/#File" target="_blank">os.File</a>に変更することで実現することができます。</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="おめでとうございます!" duration="1">
+        <p>構造体のタグを整形する方法について学びました!</p>
+<p>学習した内容を <code>main.go</code> を含むコマンドラインツールとして実装し、<a href="https://github.com" target="_blank">github.com</a>で公開しましょう。</p>
+<h2><strong>参考</strong></h2>
+<ul>
+<li>コマンドラインフラグを処理する: <a href="https://golang.org/pkg/flag/" target="_blank">https://golang.org/pkg/flag/</a></li>
+<li>コマンドライン引数を直接扱う: <a href="https://golang.org/pkg/os/#pkg-variables" target="_blank">https://golang.org/pkg/os/#pkg-variables</a> の <code>Args</code></li>
+<li>静的解析用の統一的なインターフェース: <a href="https://godoc.org/golang.org/x/tools/go/analysis" target="_blank">https://godoc.org/golang.org/x/tools/go/analysis</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-49880327-14', 'auto');
+
+    (function() {
+      var gaCodelab = '';
+      if (gaCodelab) {
+        ga('create', gaCodelab, 'auto', {name: 'codelab'});
+      }
+
+      var gaView;
+      var parts = location.search.substring(1).split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var param = parts[i].split('=');
+        if (param[0] === 'viewga') {
+          gaView = param[1];
+          break;
+        }
+      }
+      if (gaView && gaView !== gaCodelab) {
+        ga('create', gaView, 'auto', {name: 'view'});
+      }
+    })();
+  </script>
+
+</body>
+</html>

@@ -13,3 +13,4 @@
 * [静的解析をはじめよう - Gopherをさがせ！](./find-gophers?index=codelab) by tenntenn
 * [GoでWebAssemblyに触れよう](./go-webassembly?index=codelab) by tenntenn
 * [Goでテストを書いてみよう](./go-greeting?index=codelab) by tenntenn
+* [構造体のタグを整形しよう！](./format-structtag?index=codelab) by daisuzu
