@@ -7,6 +7,7 @@ codelabs=(
     "go-webassembly"       "12IXvrTgNIMUXotVcGkpqfu3WFhvtvfnzlvQfJIn0h6k"
     "go-greeting"          "1TwbojRvp4r28KceQQHTlSdN4lsRzL9bqB0diS2Xm39I"
     "format-structtag"     "1F2RLyo66xXkEfLhHCzSdBoI_Yn9pqRGFxjMmDBCVgjM"
+    "first-step-type-check"     "1Bfn8HleDRwIVps_Pt5PCjFAeIXR3lyRzwo8UHzxwus0"
 )
 
 for ((i = 0; i < ${#codelabs[@]}; i+=2)) {
