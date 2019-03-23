@@ -1,0 +1,251 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>型チェックでインターフェースを実装しているか調べよう</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="first-step-type-check"
+                  title="型チェックでインターフェースを実装しているか調べよう"
+                  environment="web"
+                  feedback-link="https://github.com/golangtokyo/codelab/issues">
+    
+      <google-codelab-step label="概要" duration="3">
+        <p class="image-container">Goは <code>go/ast</code> パッケージによって抽象構文木（AST）を簡単に入手することができます。ただ、GoのASTはあくまで構文チェックレベルであり型情報までは確認できていません。</p>
+<p class="image-container">ここでは go/types パッケージを使って型チェックを使った静的解析を行なってみましょう。なお、このCodelabs内では今後 go/types パッケージの <code>go/</code> を省略し、単純に <code>types</code> パッケージと記載します。</p>
+<p class="image-container">今回は <code>types.Object</code>、<code>types.Type</code> を駆使しながらコード中に定義された構造体が特定のインターフェースを実装している型を見つけてみます。</p>
+<p class="image-container">なお、本コードラボでは静的解析の基礎や <code>go/ast</code> パッケージについては深く解説しないため、事前に以下のコードラボで学習しておくことをおすすめします。</p>
+<ul>
+<li><a href="https://golangtokyo.github.io/codelab/find-gophers/?index=codelab#0" target="_blank">静的解析をはじめよう - Gopherをさがせ！</a></li>
+<li><a href="https://golangtokyo.github.io/codelab/format-structtag/?index=codelab#0" target="_blank">構造体のタグを整形しよう！</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="初めての型チェック" duration="15">
+        <p class="image-container">まずは <code>types</code> パッケージを使ってインターフェースと型を比較してみましょう。最初に以下のようなコードに対して静的解析を行います。<code>I</code> インターフェースを <code>*S</code> と <code>Y</code> が実装しているサンプルコードです。</p>
+<pre><code>package p
+
+type I interface{
+        Hoge() string
+}
+
+type S struct {
+}
+
+func (s *S) Hoge() string{
+        return &#34;&#34;
+}
+
+type Y struct {
+        hoge string
+}
+
+func (y Y) Hoge() string{
+        return &#34;&#34;
+}</code></pre>
+<p class="image-container">すでに <code>go/ast</code> パッケージを利用してASTを取得したことがあるならば、<code>parser.ParseFile</code> 関数などの使い方を知っていると思います。 <code>types</code> パッケージによる型チェックは、<code>types.Config</code> 構造体の <code>Check</code> メソッドを呼ぶところから始まります。</p>
+<pre><code>func (conf *Config) Check(path string, fset *token.FileSet,
+ files []*ast.File, info *Info) (*Package, error)</code></pre>
+<aside class="special"><p class="image-container">golang.org/x/tools/go/analysis パッケージの <code>analysis.Pass</code> 構造体を経由すると<code>types.Config.Check</code> メソッドを使う目的である <code>*types.Package</code> や <code>*types.Info</code> などを簡単に入手することができます。しかし今回はGo Playgroundを利用しながら進めるため、このハンズオンでは <code>Config.Check</code> メソッドを使う従来のやり方で静的解析を行なっていきます。</p>
+</aside>
+<p>詳細な型チェックを行うためには、<code>*ast.File</code> などの情報のほかに、<a href="https://golang.org/pkg/go/types/#Info" target="_blank"><code>types.Info</code></a> も必要になりますが最初は利用しないので <code>nil</code> を入れます。戻り値の <a href="https://golang.org/pkg/go/types/#Package" target="_blank"><code>types.Package</code></a> は <code>types.Config</code> の初期化時に定められたインポート設定などを元にしてAST中のオブジェクトの型を評価した結果を内部の格納します。</p>
+<pre><code>conf := types.Config{}
+f, _ := parser.ParseFile(fset, &#34;p&#34;, code, parser.ParseComments)
+
+pkg, err := conf.Check(&#34;p&#34;, fset, []*ast.File{f}, nil)</code></pre>
+<p>戻り値の <code>pkg</code> （ <a href="https://golang.org/pkg/go/types/#Package" target="_blank"><code>*types.Package</code></a> ）に格納された型情報は <a href="https://golang.org/pkg/go/types/#Package.Scope" target="_blank"><code>types.Package.Scope</code></a> メソッドによって得られる <a href="https://golang.org/pkg/go/types/#Scope" target="_blank"><code>types.Scope</code></a> の中にあります。 <code>Scope</code> はある条件下で解決されたオブジェクトの名前と型 のマッピングです。 <code>Scope</code> の中から自分がほしいオブジェクトを取り出すには、 <a href="https://golang.org/pkg/go/types/#Scope.Lookup" target="_blank"><code>types.Scope.Lookup</code></a> メソッドを使います。</p>
+<h2>types.Object インターフェースと types.Type インターフェース</h2>
+<p><code> Lookup</code> メソッドで取得できる <a href="https://golang.org/pkg/go/types/#Object" target="_blank"><code>types.Object</code></a> インターフェースを実装したオブジェクトが型チェックをおこなう単位要素になっていきます。</p>
+<aside class="special"><p class="image-container"><code>types.Object</code> インターフェースは以下の具象型が存在します。</p>
+<ul>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Builtin" target="_blank"><code>types.Builtin</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Const" target="_blank"><code>types.Const</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Func" target="_blank"><code>types.Func</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Label" target="_blank"><code>types.Label</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#NIll" target="_blank"><code>types.Nil</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#PkgName" target="_blank"><code>types.PkgName</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#TypeName" target="_blank"><code>types.TypeName</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Var" target="_blank"><code>types.Var</code></a></li>
+</ul>
+</aside>
+<p><a href="https://golang.org/pkg/go/types/#Object" target="_blank"><code>types.Object</code></a> インターフェースは <code>Type</code> メソッドを持ち、そのオブジェクトの <code>types.Type</code> を取得することができます。<code>types.Type</code> こそが今回解析したい型情報です。</p>
+<aside class="special"><p class="image-container"><code>types.Type</code> インターフェースは以下の具象型が存在します。</p>
+<ul>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Array" target="_blank"><code>types.Array</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Basic" target="_blank"><code>types.Basic</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Chan" target="_blank"><code>types.Chan</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Interface" target="_blank"><code>types.Interface</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Map" target="_blank"><code>types.Map</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Named" target="_blank"><code>types.Named</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Pointer" target="_blank"><code>types.Pointer</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Signature" target="_blank"><code>types.Signature</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Slice" target="_blank"><code>types.Slice</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Struct" target="_blank"><code>types.Struct</code></a></li>
+<li><code>*</code><a href="https://golang.org/pkg/go/types/#Tuple" target="_blank"><code>types.Tuple</code></a></li>
+</ul>
+</aside>
+<h2>types.Scope.Lookupを使って型情報を取り出す</h2>
+<p>実際に <code>Scope</code>の中から <code>S</code> 構造体などの型を取り出し、型を取得するコードが以下になります。ここで、 <code>types</code> パッケージは <a href="https://golang.org/pkg/go/types/#Implements" target="_blank"><code>types.Implements</code></a> 関数という「第一引数の <code>tyeps.Type</code> が第二引数の <code>*types.Interface</code> を実装しているとき <code>true</code> を返す」関数をもっているので、これを利用して <code>I</code> インターフェースを実装しているか確認してみます。</p>
+<h3><a href="https://play.golang.org/p/qUfAyx3DvZK" target="_blank">ソースコード全体はこちら</a></h3>
+<pre><code>st := pkg.Scope().Lookup(&#34;S&#34;).Type()
+yt := pkg.Scope().Lookup(&#34;Y&#34;).Type()
+it := pkg.Scope().Lookup(&#34;I&#34;).Type()
+
+if types.Implements(st, it.Underlying().(*types.Interface)) {
+        fmt.Println(st, &#34;implements&#34;, it)
+}
+
+if types.Implements(yt, it.Underlying().(*types.Interface)) {
+        fmt.Println(yt, &#34;implements&#34;, it)
+}</code></pre>
+<p class="image-container">注意してほしいのは、<code>pkg.Scope().Lookup(&#34;I&#34;).Type()</code> は <code>*types.Named</code> 型の値です（ <code>interface{ Hoge() string }</code> というインターフェースである <code>I</code> という名前の型）。なので、 <code>types.Type.Underlying</code> メソッドを利用して、 <code>I</code> の基底となるインターフェースを取り出してから比較しています。</p>
+<pre><code>type Type interface {
+        // Underlying returns the underlying type of a type.
+        Underlying() Type
+
+        // String returns a string representation of a type.
+        String() string
+}</code></pre>
+<p class="image-container">実行結果は次のようになります。  <code>S</code> は<code>I</code> を実装していないのでしょうか？</p>
+<pre>p.Y implements p.I</pre>
+<p>... <code>I</code> を実装しているのは <code>S</code> ではなく <code>*S</code> でしたね。<code>types.Implements</code> 関数で <code>I</code> と比較する <code>*S</code> に対応する <code>types.Type</code> を作り出すには <a href="https://golang.org/pkg/go/types/#NewPointer" target="_blank"><code>types.NewPointer</code></a> を使う必要があります。</p>
+<h3><a href="https://play.golang.org/p/WExJiWXXzaP" target="_blank">ソースコード全体はこちら</a></h3>
+<pre><code>        st := pkg.Scope().Lookup(&#34;S&#34;).Type()
+        yt := pkg.Scope().Lookup(&#34;Y&#34;).Type()
+        it := pkg.Scope().Lookup(&#34;I&#34;).Type()
+
+        pst := types.NewPointer(st)
+
+        if types.Implements(pst, it.Underlying().(*types.Interface)) {
+                fmt.Println(pst, &#34;implements&#34;, it)
+        }
+        if types.Implements(yt, it.Underlying().(*types.Interface)) {
+                fmt.Println(yt, &#34;implements&#34;, it)
+        }</code></pre>
+<p class="image-container">こんどは期待通り <code>I</code> インターフェースを実装している結果が確認できました。</p>
+<pre>*p.S implements p.I
+p.Y implements p.I</pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="types.Infoを使った型チェック" duration="10">
+        <p class="image-container">それでは今度は先程省略した <code>types.Info</code> を使った型チェックをやってみましょう。<code>ast.File</code> の中から <code>error</code> 型を実装した構造体を探してみます。</p>
+<p><a href="https://golang.org/pkg/go/types/#Info" target="_blank"><code>types.Info</code></a> には以下の情報が含まれています。</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><code>types.Info</code> のフィールド名</p>
+</td><td colspan="1" rowspan="1"><p class="image-container">概要</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><code>Types</code></p>
+</td><td colspan="1" rowspan="1"><p class="image-container">式の型の評価結果。ある式がどんな型になるのか。定数式の場合は値も取れる</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>Defs</code>  </p>
+</td><td colspan="1" rowspan="1"><p class="image-container">識別子の定義情報。どこでその識別子が定義されたのか</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><code>Uses</code></p>
+</td><td colspan="1" rowspan="1"><p class="image-container">識別子の使用情報。どこでその識別子が使用されているのか</p>
+</td></tr>
+</table>
+<aside class="special"><p class="image-container"><code>types.Info</code> 構造体にはこの他にも <code>InitOrder</code> などの情報が含まれています。</p>
+</aside>
+<p class="image-container">これらの情報は、公開されているフィールドなので直接参照することも可能です。また、後述する<code>types.Info</code> のメソッドを通しても利用可能です。</p>
+<h2>error型の情報を取得する</h2>
+<p class="image-container">先ほどは決め打ちで型の名前を指定してインターフェースと比較していましたが、今度は <code>ast.Inspect</code> を使って取得できた型名全てと <code>error</code> 型を比較してみましょう。 <code>error</code> 型の情報は <code>types.Universe</code> という組み込み型の定義が保持されている <code>types.Scope</code> から取得することができます。 <code>error</code> 型からインターフェースの定義を取得する方法は <code>I</code> インターフェースでも行なった基底型を取得する方法を使います。</p>
+<pre><code>// error型の定義を取得する
+errType := types.Universe.Lookup(&#34;error&#34;).Type()
+// error型の基底となっているインターフェースを取得する
+it := errType.Underlying().(*types.Interface)</code></pre>
+<h2>ast.Inspectを使って型チェックをする</h2>
+<p class="image-container">比較する <code>error</code> 型のインターフェースがあれば、あとは <code>types.Info</code> の中の情報を探検するだけです。識別子に対応する <code>types.Object</code> を取得するには <code>types.Info.ObjectOf</code> メソッドを使います。式を評価した結果の <code>types.Type</code> を取得したい場合は <code>types.Info.TypeOf</code> メソッドを使います。</p>
+<pre><code>func (info *Info) ObjectOf(id *ast.Ident) Object
+
+func (info *Info) TypeOf(e ast.Expr) Type</code></pre>
+<p class="image-container"><code>types.Info.ObjectOf</code> メソッドを使って <code>error</code> 型のインターフェースを満たす型を探すコードの <code>ast.Inspect</code> 部分が以下です。</p>
+<h3><a href="https://play.golang.org/p/khf5tf-bL6o" target="_blank">ソースコード全体はこちら</a></h3>
+<pre><code>ast.Inspect(f, func(n ast.Node) bool {
+        switch n := n.(type) {
+        // 識別子のみ処理する
+        case *ast.Ident:
+                // types.Infoの中からtypes.Objectを取得する
+                obj := info.ObjectOf(n)
+                if obj == nil {
+                        return true
+                }
+                // 型名じゃなかったら無視する
+                if _, ok := obj.(*types.TypeName); !ok {
+                        return true
+                }
+                typ := obj.Type()
+
+
+                // 構造体か
+                if _, ok := typ.Underlying().(*types.Struct); ok {
+                        if types.Implements(typ, it) {
+                                fmt.Println(fset.Position(obj.Pos()), typ, &#34;implements&#34;, errType)
+                                return true
+                        }
+                        // ポインタ型としてerrorインターフェースを満たしていないか
+                        ptr := types.NewPointer(typ)
+                        if types.Implements(ptr, it) {
+                                fmt.Println(fset.Position(obj.Pos()), ptr, &#34;implements&#34;, errType)
+                        }
+                }
+        }
+        return true
+})</code></pre>
+<p>今回は <code>p</code> パッケージの <code>Y</code> が <code>error</code> 型のインターフェースを実装していることを解析できました。（解析したコードの内容は<a href="https://play.golang.org/p/khf5tf-bL6o" target="_blank">ソースコード全体</a>の冒頭を確認してください）</p>
+<pre>p:15:6 p.Y implements error</pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="おめでとうございます！" duration="5">
+        <p class="image-container"><code>go/types</code> パッケージを使った型チェックを使った静的解析を学びました。応用を考えたいときは <code>go/types</code> パッケージのGo Docを見ながらPlaygroudや手元で簡単なコードを動かしながら確かめていくのがおすすめです。</p>
+<p class="image-container">このチュートリアルではPlaygroud上でファイル相当の文字列を読み込むのみでした。ぜひ実際に <code>analysis</code> パッケージを使ってCLIツールを作成し、皆さんの手元にあるGoのコードを型チェックしてみましょう。</p>
+<h3> <code>analysis</code> パッケージを使ってCLIツールをつくるときに参考になる資料</h3>
+<ul>
+<li><a href="https://golang.org/pkg/go/types/" target="_blank">https://golang.org/pkg/go/types/</a>  </li>
+<li><a href="https://godoc.org/golang.org/x/tools/go/analysis" target="_blank">https://godoc.org/golang.org/x/tools/go/analysis</a> </li>
+<li><a href="https://tech.mercari.com/entry/2018/12/16/150000" target="_blank">Goにおける静的解析のモジュール化について</a></li>
+<li><a href="https://budougumi0617.github.io/2019/02/01/how-to-use-analisys-package/" target="_blank">golang.org/x/tools/go/analysisでLinterツールを自作する #gounco #golang</a></li>
+</ul>
+<h2 class="checklist">What you&#39;ll learn</h2>
+<ul class="checklist">
+<li><code>types.Type</code> の型情報を使ってある型があるインターフェースを満たしているか型チェックすることができました</li>
+<li><code>types.Scope.Lookup</code> メソッドを使って期待する値のオブジェクトを取得することができました</li>
+<li><code>types.Info.ObjectOf</code> メソッドを使って識別子の型情報を取得することができました</li>
+<li><code>types.Info.TypeOf</code> メソッドを使って式の型情報の取得もチャレンジしてみてください</li>
+<li><code>error</code> インターフェースを実装する型を探すことができました</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/codelab-elements/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/prettify.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/codelab-elements.js"></script>
+
+</body>
+</html>

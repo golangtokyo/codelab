@@ -1,0 +1,23 @@
+{
+  "environment": "web",
+  "source": "1Bfn8HleDRwIVps_Pt5PCjFAeIXR3lyRzwo8UHzxwus0",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2019-03-23T03:08:56Z",
+  "id": "first-step-type-check",
+  "duration": 33,
+  "title": "型チェックでインターフェースを実装しているか調べよう",
+  "author": "budougumi0617",
+  "summary": "golang.org/pkg/go/types パッケージを使って型チェックを使った静的解析を行なってみましょう。\n今回はerrorインターフェースを実装している型を見つけてみます。",
+  "theme": "go",
+  "status": [
+    "draft"
+  ],
+  "category": [
+    "Go"
+  ],
+  "tags": [],
+  "feedback": "https://github.com/golangtokyo/codelab/issues",
+  "url": "first-step-type-check"
+}
