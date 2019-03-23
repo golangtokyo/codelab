@@ -117,7 +117,7 @@ if types.Implements(st, it.Underlying().(*types.Interface)) {
 if types.Implements(yt, it.Underlying().(*types.Interface)) {
         fmt.Println(yt, &#34;implements&#34;, it)
 }</code></pre>
-<p class="image-container">注意してほしいのは、<code>pkg.Scope().Lookup(&#34;I&#34;).Type()</code> は <code>*types.Named</code> 型の値です（ <code>interface{ Hoge() string }</code> というインターフェースである <code>I</code> という名前の値）。なので、 <code>types.Type.Underlying</code> メソッドを利用して、 <code>I</code> の基底となるインターフェースを取り出してから比較しています。</p>
+<p class="image-container">注意してほしいのは、<code>pkg.Scope().Lookup(&#34;I&#34;).Type()</code> は <code>*types.Named</code> 型の値です（ <code>interface{ Hoge() string }</code> というインターフェースである <code>I</code> という名前の型）。なので、 <code>types.Type.Underlying</code> メソッドを利用して、 <code>I</code> の基底となるインターフェースを取り出してから比較しています。</p>
 <pre><code>type Type interface {
         // Underlying returns the underlying type of a type.
         Underlying() Type
@@ -156,7 +156,7 @@ p.Y implements p.I</pre>
 </td><td colspan="1" rowspan="1"><p class="image-container">概要</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p class="image-container"><code>Types</code></p>
-</td><td colspan="1" rowspan="1"><p class="image-container">式の型の評価結果。ある式がどんな型になるのか</p>
+</td><td colspan="1" rowspan="1"><p class="image-container">式の型の評価結果。ある式がどんな型になるのか。定数式の場合は値も取れる</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><code>Defs</code>  </p>
 </td><td colspan="1" rowspan="1"><p class="image-container">識別子の定義情報。どこでその識別子が定義されたのか</p>
@@ -167,7 +167,7 @@ p.Y implements p.I</pre>
 </table>
 <aside class="special"><p class="image-container"><code>types.Info</code> 構造体にはこの他にも <code>InitOrder</code> などの情報が含まれています。</p>
 </aside>
-<p class="image-container">これらの情報は、<code>types.Info</code> のメソッドを通して利用可能です。（公開されているフィールドなので直接参照することも可能です）</p>
+<p class="image-container">これらの情報は、公開されているフィールドなので直接参照することも可能です。また、後述する<code>types.Info</code> のメソッドを通しても利用可能です。</p>
 <h2>error型の情報を取得する</h2>
 <p class="image-container">先ほどは決め打ちで型の名前を指定してインターフェースと比較していましたが、今度は <code>ast.Inspect</code> を使って取得できた型名全てと <code>error</code> 型を比較してみましょう。 <code>error</code> 型の情報は <code>types.Universe</code> という組み込み型の定義が保持されている <code>types.Scope</code> から取得することができます。 <code>error</code> 型からインターフェースの定義を取得する方法は <code>I</code> インターフェースでも行なった基底型を取得する方法を使います。</p>
 <pre><code>// error型の定義を取得する
