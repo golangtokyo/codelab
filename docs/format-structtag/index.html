@@ -79,7 +79,7 @@ files, err := parser.ParseDir(fset, path, nil, parser.ParseComments)
 if err != nil {
         log.Fatal(&#34;Error:&#34;, err)
 }</code></pre>
-<h2><strong>パッケージから取得する取得する</strong></h2>
+<h2><strong>パッケージから取得する</strong></h2>
 <p>パッケージから取得する場合、ファイルやディレクトリのような関数が用意されていないため、まずはパッケージ名から対象のファイルやディレクトリを取得する必要があります。</p>
 <p>パッケージ名からパッケージの情報を取得するには <code>go/build</code> パッケージを使用します。 <code>GOOS</code> や <code>GOARCH</code> などが実行環境のもので良ければ<a href="https://golang.org/pkg/go/build/#Context.Import" target="_blank">Default.Import</a>、変更する必要がある場合は<a href="https://golang.org/pkg/go/build/#Context" target="_blank">Context</a>を作成した上で<a href="https://golang.org/pkg/go/build/#Context.Import" target="_blank">Import</a>メソッドを呼ぶと<a href="https://golang.org/pkg/go/build/#Package" target="_blank">*Package</a>が取得できます。</p>
 <aside class="special"><p><strong>注</strong>: Go Modulesに対応したツールを作る場合は、go/buildではなく<a href="https://godoc.org/golang.org/x/tools/go/packages" target="_blank">golang.org/x/tools/go/packages</a>パッケージを用いてください。</p>
