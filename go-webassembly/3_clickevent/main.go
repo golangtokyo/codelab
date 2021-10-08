@@ -10,9 +10,10 @@ func main() {
 	message := window.Get("document").Call("getElementById", "message")
 
 	// イベントリスナーとして登録するコールバックを作成
-	cb := js.NewCallback(func(args []js.Value) {
+	cb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// HTMLを変更する
 		message.Set("innerHTML", "Clicked!!")
+		return nil
 	})
 
 	// イベントリスナーの登録
