@@ -311,9 +311,9 @@ func main() {
 
         // イベントリスナーとして登録するコールバックを作成
         cb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-          // HTMLを変更する
-          message.Set(&#34;innerHTML&#34;, &#34;Clicked!!&#34;)
-          return nil
+                // HTMLを変更する
+                message.Set(&#34;innerHTML&#34;, &#34;Clicked!!&#34;)
+                return nil
         })
 
         // イベントリスナーの登録
