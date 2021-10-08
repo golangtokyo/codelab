@@ -310,9 +310,10 @@ func main() {
         message := window.Get(&#34;document&#34;).Call(&#34;getElementById&#34;, &#34;message&#34;)
 
         // イベントリスナーとして登録するコールバックを作成
-        cb := js.NewCallback(func(args []js.Value) {
+        cb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
                 // HTMLを変更する
                 message.Set(&#34;innerHTML&#34;, &#34;Clicked!!&#34;)
+                return nil
         })
 
         // イベントリスナーの登録
@@ -324,14 +325,12 @@ func main() {
 }</code></pre>
 <p><code>getElementById</code>でHTMLの要素を取得する部分は、<code>2_dom</code>のサンプルとあまり変わりはありません。しかし、このサンプルでは取得したHTMLの要素にクリックイベントのリスナーを設定しています。</p>
 <p>クリックイベントをハンドリングするには、JavaScriptで書いた例と同様に、<code>addEventListener</code>メソッドを呼び出し、クリックイベントのイベントリスナーとしてコールバック関数を登録する必要があります。</p>
-<p>コールバック関数は、Goの世界の関数をJavaScriptの世界の関数として<code>addEventListener</code>メソッドに渡す必要があるため、単純なGoの関数ではなく、<code>syscall/js</code>パッケージの<code>js.Callback</code>型として定義する必要があります。<code>js.Callback</code>型の値は、<code>js.NewCallback</code>関数を用いることで作成することができます。作成したコールバック関数は<code>addEventListener</code>メソッドの引数として渡しています。</p>
+<p>コールバック関数は、Goの世界の関数をJavaScriptの世界の関数として<code>addEventListener</code>メソッドに渡す必要があるため、単純なGoの関数ではなく、<code>syscall/js</code>パッケージの<code>js.Func</code>型として定義する必要があります。<code>js.Func</code>型の値は、<code>js.FuncOf</code>関数を用いることで作成することができます。作成したコールバック関数は<code>addEventListener</code>メソッドの引数として渡しています。</p>
 <p><code>main</code>関数の最後にある<code>select{}</code>は<code>main</code>関数をブロックする役目があります。JavaScript側で発生したクリックイベントは、<code>syscall/js</code>パッケージで管理されているイベントループに通知されます。</p>
 <p>イベントループのゴールーチンは<code>main</code>関数が動いているゴールーチンは別ですが、<code>main</code>関数のゴールーチンが終わってしまうとGoで書いたプログラム自体が終了するため、イベントループのゴールーチンも一緒に終了してしまいます。Goのプログラムが終わってしまうとJavaScript側はイベントをハンドリングしてくれる相手がいないため、エラーを発生させます。</p>
 <aside class="warning"><p><strong>コールバック関数でデッドロックが起きる場合は</strong></p>
 <p>コールバック関数は1つのゴールーチンの中で1つずつ処理されます。そのため、コールバック関数の中で、コールバック関数によって結果を受け取るような処理があるとデッドロックが起きてしまいます。例えば、<code>net/http</code>パッケージの<code>http.Get</code>などの関数は<code>js/wasm</code>の環境では、<code>fetch</code>というJavaScriptの関数を用いて実装されています。そのため、内部でコールバック関数を用いています。もし、コールバック関数内でこれらの関数を呼び出したい場合は、別のゴールーチンを起動して呼び出す必要があります。</p>
 </aside>
-<p>ここではクリックイベントについて紹介しましたが、その他のイベントについても同様にハンドリングすることができます。また、<code>preventDefault</code>などの処理をしたい場合には、<a href="https://tip.golang.org/pkg/syscall/js/#NewEventCallback" target="_blank"><code>js.NewEventCallback</code></a>関数を用いるとよいでしょう。</p>
-
 
       </google-codelab-step>
     
